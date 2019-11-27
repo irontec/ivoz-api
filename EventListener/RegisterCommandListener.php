@@ -7,14 +7,11 @@ use Ivoz\Core\Application\Event\CommandWasExecuted;
 use Ivoz\Core\Application\RequestId;
 use Ivoz\Core\Domain\Model\EntityInterface;
 use Ivoz\Core\Domain\Service\DomainEventPublisher;
-use Lexik\Bundle\JWTAuthenticationBundle\Security\Guard\JWTTokenAuthenticator;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Event\GetResponseEvent;
 use Symfony\Component\HttpKernel\Event\GetResponseForControllerResultEvent;
 use Symfony\Component\HttpKernel\Exception\NotAcceptableHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Lexik\Bundle\JWTAuthenticationBundle\Security\Authentication\Token\PreAuthenticationJWTUserToken;
-use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 final class RegisterCommandListener
 {
@@ -29,7 +26,7 @@ final class RegisterCommandListener
     public function __construct(
         DomainEventPublisher $eventPublisher,
         RequestId $requestId,
-        TokenStorage $tokenStorage
+        TokenStorageInterface $tokenStorage
     ) {
         $this->eventPublisher = $eventPublisher;
         $this->tokenStorage = $tokenStorage;

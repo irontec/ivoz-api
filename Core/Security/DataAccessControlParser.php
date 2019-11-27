@@ -7,14 +7,11 @@ use ApiPlatform\Core\Metadata\Resource\Factory\ResourceMetadataFactoryInterface;
 use ApiPlatform\Core\Util\RequestAttributesExtractor;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\Common\Persistence\ObjectRepository;
-use Ivoz\Provider\Domain\Model\Company\CompanyRepository;
-use Ivoz\Provider\Domain\Model\User\UserRepository;
+use Ivoz\Core\Infrastructure\Persistence\Doctrine\Model\Helper\CriteriaHelper;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
-use Ivoz\Core\Infrastructure\Persistence\Doctrine\Model\Helper\CriteriaHelper;
-use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 
 class DataAccessControlParser
 {
@@ -46,7 +43,7 @@ class DataAccessControlParser
 
     public function __construct(
         RequestStack $requestStack,
-        TokenStorage $tokenStorage,
+        TokenStorageInterface $tokenStorage,
         ResourceMetadataFactoryInterface $resourceMetadataFactory,
         AccessControlEvaluator $accessControlEvaluator
     ) {

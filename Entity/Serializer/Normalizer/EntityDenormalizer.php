@@ -12,7 +12,7 @@ use Ivoz\Core\Application\Service\CreateEntityFromDTO;
 use Ivoz\Core\Application\Service\UpdateEntityFromDTO;
 use Ivoz\Core\Domain\Model\EntityInterface;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use ApiPlatform\Core\Metadata\Property\Factory\PropertyMetadataFactoryInterface;
@@ -43,7 +43,7 @@ class EntityDenormalizer implements DenormalizerInterface
         DateTimeNormalizerInterface $dateTimeNormalizer,
         PropertyNameCollectionFactory $propertyNameCollectionFactory,
         DataAccessControlParser $dataAccessControlParser,
-        TokenStorage $tokenStorage,
+        TokenStorageInterface $tokenStorage,
         RequestStack $requestStack
     ) {
         $this->createEntityFromDTO = $createEntityFromDTO;
