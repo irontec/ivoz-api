@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\GetResponseForControllerResultEvent;
 use Symfony\Component\HttpKernel\Exception\NotAcceptableHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage;
 
 final class RegisterCommandListener
 {
@@ -26,7 +26,7 @@ final class RegisterCommandListener
     public function __construct(
         DomainEventPublisher $eventPublisher,
         RequestId $requestId,
-        TokenStorageInterface $tokenStorage
+        TokenStorage $tokenStorage
     ) {
         $this->eventPublisher = $eventPublisher;
         $this->tokenStorage = $tokenStorage;

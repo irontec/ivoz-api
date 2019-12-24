@@ -9,7 +9,7 @@ use Doctrine\Common\Collections\Criteria;
 use Doctrine\Common\Persistence\ObjectRepository;
 use Ivoz\Core\Infrastructure\Persistence\Doctrine\Model\Helper\CriteriaHelper;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
@@ -43,7 +43,7 @@ class DataAccessControlParser
 
     public function __construct(
         RequestStack $requestStack,
-        TokenStorageInterface $tokenStorage,
+        TokenStorage $tokenStorage,
         ResourceMetadataFactoryInterface $resourceMetadataFactory,
         AccessControlEvaluator $accessControlEvaluator
     ) {
@@ -106,7 +106,7 @@ class DataAccessControlParser
             []
         );
 
-        if (empty($response) && $mode == self::WRITE_ACCESS_CONTROL_ATTRIBUTE) {
+        if (empty($response) && $mode === self::WRITE_ACCESS_CONTROL_ATTRIBUTE) {
             /**
              * Use read access control as fallback
              */
@@ -331,12 +331,10 @@ class DataAccessControlParser
     {
         $request = $this->requestStack->getCurrentRequest();
 
-        $variables = $this->repositories + [
+        return $this->repositories + [
             'user' => $this->getUserOrThrowException(),
             'object' => $request->attributes->get('data'),
 
         ];
-
-        return $variables;
     }
 }

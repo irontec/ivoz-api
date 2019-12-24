@@ -8,12 +8,12 @@ use ApiPlatform\Core\JsonLd\ContextBuilderInterface;
 use ApiPlatform\Core\JsonLd\Serializer\JsonLdContextTrait;
 use ApiPlatform\Core\Metadata\Resource\Factory\ResourceMetadataFactoryInterface;
 use ApiPlatform\Core\Metadata\Resource\ResourceMetadata;
+use Ivoz\Api\Entity\Metadata\Property\Factory\PropertyNameCollectionFactory;
 use Ivoz\Api\Entity\Serializer\Normalizer\DateTimeNormalizerInterface;
 use Ivoz\Api\Json\Serializer\Normalizer\EntityNormalizer as JsonEntityNormalizer;
-use Ivoz\Api\Entity\Metadata\Property\Factory\PropertyNameCollectionFactory;
 use Ivoz\Core\Application\DataTransferObjectInterface;
 use Ivoz\Core\Application\Service\Assembler\DtoAssembler;
-use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 /**
@@ -43,7 +43,7 @@ class EntityNormalizer extends JsonEntityNormalizer implements NormalizerInterfa
         DtoAssembler $dtoAssembler,
         DateTimeNormalizerInterface $dateTimeNormalizer,
         PropertyNameCollectionFactory $propertyNameCollectionFactory,
-        TokenStorageInterface $tokenStorage
+        TokenStorage $tokenStorage
     ) {
         $this->iriConverter = $iriConverter;
         $this->contextBuilder = $contextBuilder;
@@ -51,7 +51,6 @@ class EntityNormalizer extends JsonEntityNormalizer implements NormalizerInterfa
         parent::__construct(
             $resourceMetadataFactory,
             $resourceClassResolver,
-            $contextBuilder,
             $dtoAssembler,
             $dateTimeNormalizer,
             $propertyNameCollectionFactory,
