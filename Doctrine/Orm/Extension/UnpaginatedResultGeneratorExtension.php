@@ -8,8 +8,10 @@ use ApiPlatform\Core\Metadata\Resource\Factory\ResourceMetadataFactoryInterface;
 use ApiPlatform\Core\Metadata\Resource\ResourceMetadata;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\QueryBuilder;
+use Ivoz\Core\Infrastructure\Persistence\Doctrine\ORM\Query;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Ivoz\Core\Infrastructure\Persistence\Doctrine\ORM\ToggleableBufferedQueryInterface;
 
 final class UnpaginatedResultGeneratorExtension implements ContextAwareQueryResultCollectionExtensionInterface
 {
@@ -94,21 +96,23 @@ final class UnpaginatedResultGeneratorExtension implements ContextAwareQueryResu
             ->getConfiguration()
             ->setSQLLogger(null);
 
-        (function () {
-            $this->connect();
-            $driverName = $this->_conn->getAttribute(\PDO::ATTR_DRIVER_NAME);
-            if ($driverName === 'mysql') {
-                $this->_conn->setAttribute(
-                    \PDO::MYSQL_ATTR_USE_BUFFERED_QUERY,
-                    false
-                );
-            }
-        })->call($connection);
-
+        if ($this->entityManager instanceof ToggleableBufferedQueryInterface) {
+            $this
+                ->entityManager
+                ->disableBufferedQuery();
+        }
 
         $rowCount = 0;
         $query = $queryBuilder->getQuery();
-        $iterableResult = $query->iterate();
+
+        $query->setHint(
+            Query::HINT_INCLUDE_META_COLUMNS,
+            true
+        );
+        $iterableResult = $query->iterate(
+            null,
+            Query::HYDRATE_DTO
+        );
 
         while (($entity = $iterableResult->next()) !== false) {
             yield current($entity);

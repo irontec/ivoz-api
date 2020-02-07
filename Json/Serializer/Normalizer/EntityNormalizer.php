@@ -49,7 +49,16 @@ class EntityNormalizer implements NormalizerInterface
      */
     public function supportsNormalization($data, $format = null)
     {
-        return static::FORMAT === $format && ($data instanceof EntityInterface);
+        return
+            static::FORMAT === $format
+            && $this->isSupportedClass($data);
+    }
+
+    protected function isSupportedClass($data)
+    {
+        return
+            $data instanceof EntityInterface
+            || $data instanceof DataTransferObjectInterface;
     }
 
     /**
@@ -57,15 +66,22 @@ class EntityNormalizer implements NormalizerInterface
      */
     public function normalize($object, $format = null, array $context = [])
     {
+        if ($object instanceof DataTransferObjectInterface) {
+            return $this->fromDto(
+                $object,
+                $context
+            );
+        }
+
         if (!$object instanceof EntityInterface) {
-            throw new \Exception('Object must implement EntityInterface');
+            throw new \Exception('Object must implement EntityInterface or DataTransferObjectInterface');
         }
 
         if (isset($context['item_operation_name']) && $context['item_operation_name'] === 'put') {
             $object = $this->initializeRelationships($object, []);
         }
 
-        return $this->normalizeEntity(
+        return $this->fromEntity(
             $object,
             $context
         );
@@ -91,7 +107,7 @@ class EntityNormalizer implements NormalizerInterface
         return $entity;
     }
 
-    private function normalizeEntity(
+    private function fromEntity(
         EntityInterface $entity,
         array $context,
         $isSubresource = false
@@ -124,6 +140,40 @@ class EntityNormalizer implements NormalizerInterface
             $isSubresource,
             $depth,
             $resourceClass,
+            $resourceMetadata
+        );
+    }
+
+    private function fromDto(
+        DataTransferObjectInterface $dto,
+        array $context,
+        $isSubresource = false
+    ) {
+        $entityClass = substr(
+            get_class($dto),
+            0,
+            -3
+        );
+
+        $resourceMetadata = $this->resourceMetadataFactory->create(
+            $entityClass
+        );
+
+        $depth = isset($context['item_operation_name'])
+            ? $resourceMetadata->getItemOperationAttribute($context['item_operation_name'], 'depth', 1)
+            : $resourceMetadata->getCollectionOperationAttribute($context['collection_operation_name'], 'depth', 0);
+
+        if ($depth > 0) {
+            $normalizationContext = $context['operation_normalization_context'] ?? $context['operation_type'] ?? '';
+            $propertyMap = $dto->getPropertyMap($normalizationContext);
+        }
+
+        return $this->normalizeDto(
+            $dto,
+            $context,
+            $isSubresource,
+            $depth,
+            $entityClass,
             $resourceMetadata
         );
     }
