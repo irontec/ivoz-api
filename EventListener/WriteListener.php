@@ -63,26 +63,48 @@ final class WriteListener
             return;
         }
 
-        switch ($request->getMethod()) {
-            case Request::METHOD_PUT:
-            case Request::METHOD_POST:
-                $this->validateAccessControlOrThrowException(
-                    $controllerResult
-                );
+        $writeOperation = in_array(
+            $request->getMethod(),
+            [
+                Request::METHOD_PUT,
+                Request::METHOD_POST,
+                Request::METHOD_DELETE
+            ],
+            true
+        );
 
-                $this->entityPersister->persist(
-                    $controllerResult,
-                    true
-                );
-                break;
-            case Request::METHOD_DELETE:
-                $this->validateAccessControlOrThrowException(
-                    $controllerResult
-                );
+        if (!$writeOperation) {
+            return;
+        }
 
-                $this->entityPersister->remove($controllerResult);
-                $event->setControllerResult(null);
-                break;
+        $this->validateAccessControlOrThrowException(
+            $controllerResult
+        );
+
+        try {
+            $isDelete = $request->getMethod() === Request::METHOD_DELETE;
+            if ($isDelete) {
+                $this
+                    ->entityPersister
+                    ->remove($controllerResult);
+
+                $event
+                    ->setControllerResult(null);
+
+                return;
+            }
+
+            $this->entityPersister->persist(
+                $controllerResult,
+                true
+            );
+
+        } catch (\DomainException $e) {
+
+            throw new AccessDeniedException(
+                $e->getMessage(),
+                $e
+            );
         }
     }
 
