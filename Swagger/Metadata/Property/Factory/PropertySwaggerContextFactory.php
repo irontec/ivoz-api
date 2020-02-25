@@ -8,30 +8,22 @@ use Doctrine\Common\Persistence\Mapping\ClassMetadataFactory;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Mapping\ClassMetadataInfo;
 use Symfony\Component\PropertyInfo\Type;
+use ApiPlatform\Core\Metadata\Extractor\ExtractorInterface;
 
 class PropertySwaggerContextFactory implements PropertyMetadataFactoryInterface
 {
-    /**
-     * @var ClassMetadataFactory
-     */
     private $classMetadataFactory;
-
-    /**
-     * @var PropertyMetadataFactoryInterface|null
-     */
     private $decorated;
+    private $extractor;
 
-    /**
-     * PropertySwaggerContextFactory constructor.
-     * @param ClassMetadataFactory $classMetadataFactory
-     * @param PropertyMetadataFactoryInterface|null $decorated
-     */
     public function __construct(
         ClassMetadataFactory $classMetadataFactory,
-        PropertyMetadataFactoryInterface $decorated = null
+        PropertyMetadataFactoryInterface $decorated = null,
+        ExtractorInterface $extractor
     ) {
         $this->classMetadataFactory = $classMetadataFactory;
         $this->decorated = $decorated;
+        $this->extractor = $extractor;
     }
 
     /**
@@ -41,6 +33,11 @@ class PropertySwaggerContextFactory implements PropertyMetadataFactoryInterface
     {
         /** @var PropertyMetadata $propertyMetadata */
         $propertyMetadata = $this->decorated->create(...func_get_args());
+
+        $resources = $this->extractor->getResources();
+        $swaggerRequiredFields =
+            $resources[$resourceClass]['attributes']['swagger_context']['required']
+            ?? [];
 
         $type = $propertyMetadata->getType();
         if (!$type) {
@@ -72,7 +69,11 @@ class PropertySwaggerContextFactory implements PropertyMetadataFactoryInterface
                 (isset($column['nullable']) && $column['nullable'])
                 || (isset($column['onDelete']) && $column['onDelete'] === 'set null');
 
-            return $propertyMetadata->withRequired(!$isNullableFk);
+            $isRequiredFk =
+                !$isNullableFk
+                || in_array($property, $swaggerRequiredFields, true);
+
+            return $propertyMetadata->withRequired($isRequiredFk);
         }
 
         try {
@@ -83,7 +84,11 @@ class PropertySwaggerContextFactory implements PropertyMetadataFactoryInterface
 
         $ormType = $fldMetadata['type'];
         $nullable = $metadata->isNullable($property);
-        $propertyMetadata = $propertyMetadata->withRequired(!$nullable);
+        $required =
+            !$nullable
+            || in_array($property, $swaggerRequiredFields, true);
+
+        $propertyMetadata = $propertyMetadata->withRequired($required);
 
         $hasDefaultValue = isset($fldMetadata['options']) && isset($fldMetadata['options']['default']);
         if ($hasDefaultValue) {
