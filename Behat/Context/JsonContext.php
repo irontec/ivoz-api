@@ -15,6 +15,8 @@ use Behatch\Json\Json;
  */
 class JsonContext extends BaseContext implements Context, SnippetAcceptingContext
 {
+    use StreamedResponseTrait;
+
     /**
      * @var Request
      */
@@ -35,6 +37,25 @@ class JsonContext extends BaseContext implements Context, SnippetAcceptingContex
     ) {
         $this->request = $request;
         $this->httpCallResultPool = $httpCallResultPool;
+    }
+
+    /**
+     * Checks, whether the response content is equal to given json
+     *
+     * @Then the streamed JSON should be equal to:
+     */
+    public function theStreamedJsonResponseShouldBeEqualTo(PyStringNode $expected)
+    {
+        $expected = new Json($expected);
+        $actual = new Json(
+            $this->getStreamedResponseContent()
+        );
+        $message = "the response was \n\"\"\"\n" . $actual->encode() ."\"\"\"";
+
+        $this->assert(
+            $expected == $actual,
+            $message
+        );
     }
 
     /**

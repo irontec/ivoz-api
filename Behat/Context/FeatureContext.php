@@ -11,13 +11,14 @@ use Behatch\HttpCall\Request;
 use Ivoz\Provider\Domain\Model\Administrator\AdministratorRepository;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Defines application features from the specific context.
  */
 class FeatureContext extends RawMinkContext implements Context, SnippetAcceptingContext
 {
+    use StreamedResponseTrait;
+
     protected $cacheDir;
 
     /**
@@ -103,7 +104,7 @@ class FeatureContext extends RawMinkContext implements Context, SnippetAccepting
     /**
      * Checks, whether the response content is equal to given text
      *
-     * @Then the streamed response should be equal to
+     * @Then the streamed response should be equal to:
      */
     public function theStreamedResponseShouldBeEqualTo(PyStringNode $expected)
     {
@@ -115,30 +116,6 @@ class FeatureContext extends RawMinkContext implements Context, SnippetAccepting
             $expected == $actual,
             $message ?: "The element '$actual' is not equal to '$expected'"
         );
-    }
-
-    protected function getStreamedResponseContent()
-    {
-        $requestReflection = new \ReflectionClass($this->request);
-        $minkPropertyAccessor = $requestReflection->getProperty('mink');
-        $minkPropertyAccessor->setAccessible(true);
-
-        $mink = $minkPropertyAccessor->getValue($this->request);
-        $response = $mink->getSession()->getDriver()->getClient()->getResponse();
-
-        if (!$response instanceof StreamedResponse) {
-            throw new \Exception('StreamedResponse was expected');
-        }
-
-        $responseReflection = new \ReflectionClass($response);
-        $streamedPropertyAccessor = $responseReflection->getProperty('streamed');
-        $streamedPropertyAccessor->setAccessible(true);
-        $streamedPropertyAccessor->setValue($response, false);
-
-        ob_start();
-        $response->sendContent();
-
-        return ob_get_clean();
     }
 
     protected function assert($test, $message)
