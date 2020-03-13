@@ -9,6 +9,7 @@ use Behatch\Context\BaseContext;
 use Behatch\HttpCall\HttpCallResultPool;
 use Behatch\HttpCall\Request;
 use Behatch\Json\Json;
+use Behatch\Json\JsonInspector;
 
 /**
  * Defines application features from the specific context.
@@ -17,12 +18,9 @@ class JsonContext extends BaseContext implements Context, SnippetAcceptingContex
 {
     use StreamedResponseTrait;
 
-    /**
-     * @var Request
-     */
     protected $request;
-
     protected $httpCallResultPool;
+    protected $inspector;
 
     /**
      * Initializes context.
@@ -37,6 +35,51 @@ class JsonContext extends BaseContext implements Context, SnippetAcceptingContex
     ) {
         $this->request = $request;
         $this->httpCallResultPool = $httpCallResultPool;
+        $this->inspector = new JsonInspector(
+            'javascript'
+        );
+    }
+
+    /**
+     * Checks, that the response is correct JSON
+     *
+     * @Then the streamed response should be in JSON
+     */
+    public function theStreamedResponseShouldBeInJson()
+    {
+        $this->getJson();
+    }
+
+    /**
+     * Checks, that given JSON node has N element(s)
+     *
+     * @Then the streamed JSON node :node should have :count element(s)
+     */
+    public function theStreamedJsonNodeShouldHaveElements($node, $count)
+    {
+        $json = $this->getJson();
+
+        $actual = $this->inspector->evaluate($json, $node);
+
+        $this->assertSame($count, sizeof((array) $actual));
+    }
+
+    /**
+     * Checks, that given JSON node is equal to given value
+     *
+     * @Then the streamed JSON node :node should be equal to :text
+     */
+    public function theStreamedJsonNodeShouldBeEqualTo($node, $text)
+    {
+        $json = $this->getJson();
+
+        $actual = $this->inspector->evaluate($json, $node);
+
+        if ($actual != $text) {
+            throw new \Exception(
+                sprintf("The node value is '%s'", json_encode($actual))
+            );
+        }
     }
 
     /**
@@ -82,6 +125,13 @@ class JsonContext extends BaseContext implements Context, SnippetAcceptingContex
                 "The json is equal to:\n". $actual->encode()
             );
         }
+    }
+
+    private function getJson()
+    {
+        return new Json(
+            $this->getStreamedResponseContent()
+        );
     }
 
     /**
