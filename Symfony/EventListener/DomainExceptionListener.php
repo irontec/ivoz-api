@@ -49,7 +49,8 @@ class DomainExceptionListener
 
         $format = ErrorFormatGuesser::guessErrorFormat($event->getRequest(), $this->errorFormats);
         $event->setException($exception);
-        $responseCode = $exception->getCode() > 0
+        $errorCode = $exception->getCode();
+        $responseCode = $errorCode > 400 && $errorCode < 600
             ? $exception->getCode()
             : Response::HTTP_BAD_REQUEST;
 
