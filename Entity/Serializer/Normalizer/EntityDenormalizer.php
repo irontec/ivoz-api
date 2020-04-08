@@ -137,14 +137,29 @@ class EntityDenormalizer implements DenormalizerInterface
         }
 
         $target = $entity ? $entity->__toString() : $class;
+
+        /** @var DataTransferObjectInterface $dto */
+        $dto = call_user_func([
+            $class,
+            'createDto'
+        ]);
+        $sensitiveFields = $dto->getSensitiveFields();
+
+        $loggableInput = $input;
+        foreach ($sensitiveFields as $sensitiveField) {
+            if (!array_key_exists($sensitiveField, $loggableInput)) {
+                continue;
+            }
+            $loggableInput[$sensitiveField] = '*****';
+        }
+
         $this->logger->info(
-            sprintf('Mapping %s into %s', json_encode($input), $target)
+            sprintf('Mapping %s into %s', json_encode($loggableInput), $target)
         );
 
-        $dtoClass = $class. 'Dto';
         $dto = $entity
             ? $this->dtoAssembler->toDto($entity)
-            : new $dtoClass;
+            : $dto;
 
         $baseData = $dto->toArray();
         foreach ($baseData as $key => $value) {
