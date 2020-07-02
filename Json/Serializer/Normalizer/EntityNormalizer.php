@@ -118,9 +118,18 @@ class EntityNormalizer implements NormalizerInterface
 
         $resourceMetadata = $this->resourceMetadataFactory->create($resourceClass);
 
+        $isItemOperation = isset($context['item_operation_name']);
+        $itemOperationMethod = $isItemOperation
+            ? $resourceMetadata->getItemOperationAttribute($context['item_operation_name'], 'method')
+            : null;
+
+        $defaultDepth = $isItemOperation && ('PUT' !== $itemOperationMethod)
+            ? 1
+            : 0;
+
         $depth = isset($context['item_operation_name'])
-            ? $resourceMetadata->getItemOperationAttribute($context['item_operation_name'], 'depth', 1)
-            : $resourceMetadata->getCollectionOperationAttribute($context['collection_operation_name'], 'depth', 0);
+            ? $resourceMetadata->getItemOperationAttribute($context['item_operation_name'], 'depth', $defaultDepth)
+            : $resourceMetadata->getCollectionOperationAttribute($context['collection_operation_name'], 'depth', $defaultDepth);
 
         if ($depth > 0) {
             $dtoClass = $resourceClass . 'Dto';
