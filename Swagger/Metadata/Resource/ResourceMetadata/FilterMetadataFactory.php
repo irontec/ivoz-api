@@ -15,6 +15,9 @@ use Ivoz\Api\Doctrine\Orm\Filter\NumericFilter;
 use Ivoz\Api\Doctrine\Orm\Filter\OrderFilter;
 use Ivoz\Api\Doctrine\Orm\Filter\RangeFilter;
 use Ivoz\Api\Doctrine\Orm\Filter\SearchFilter;
+use Ivoz\Api\Doctrine\Orm\Filter\SearchFilterEnd;
+use Ivoz\Api\Doctrine\Orm\Filter\SearchFilterExact;
+use Ivoz\Api\Doctrine\Orm\Filter\SearchFilterStart;
 use Ivoz\Api\Entity\Metadata\Property\Factory\PropertyNameCollectionFactory;
 use Ivoz\Core\Application\DataTransferObjectInterface;
 use Ivoz\Core\Domain\Model\EntityInterface;
@@ -97,6 +100,9 @@ class FilterMetadataFactory implements ResourceMetadataFactoryInterface
                 case 'guid':
                 case 'text':
                     $filters[SearchFilter::SERVICE_NAME][$attribute] = SearchFilter::STRATEGY_PARTIAL;
+                    $filters[SearchFilterExact::SERVICE_NAME][$attribute] = SearchFilter::STRATEGY_EXACT;
+                    $filters[SearchFilterStart::SERVICE_NAME][$attribute] = SearchFilter::STRATEGY_START;
+                    $filters[SearchFilterEnd::SERVICE_NAME][$attribute] = SearchFilter::STRATEGY_END;
                     $isNullable = $this->isNullableField($resourceClass, $attribute);
                     if ($isNullable) {
                         $filters[ExistsFilter::SERVICE_NAME][$attribute] = ExistsFilter::QUERY_PARAMETER_KEY;
