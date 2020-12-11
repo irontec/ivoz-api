@@ -3,7 +3,7 @@
 namespace Ivoz\Api\Json\EventListener;
 
 use ApiPlatform\Core\DataProvider\PaginatorInterface;
-use Symfony\Component\HttpKernel\Event\FilterResponseEvent;
+use Symfony\Component\HttpKernel\Event\ResponseEvent;
 
 final class AddCollectionHeaders
 {
@@ -21,7 +21,7 @@ final class AddCollectionHeaders
         $this->paginationEnabledParameterName = $enabledParameterName;
     }
 
-    public function onKernelResponse(FilterResponseEvent $event)
+    public function onKernelResponse(ResponseEvent $event)
     {
         $request = $event->getRequest();
         $accept = $request->headers->get('accept');

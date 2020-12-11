@@ -2,9 +2,10 @@
 
 namespace Ivoz\Api\Swagger\Serializer\DocumentationNormalizer;
 
+use Symfony\Component\Serializer\Normalizer\CacheableSupportsMethodInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
-class UnusedDefinitionRemover implements NormalizerInterface
+class UnusedDefinitionRemover implements NormalizerInterface, CacheableSupportsMethodInterface
 {
     /**
      * @var NormalizerInterface
@@ -20,7 +21,17 @@ class UnusedDefinitionRemover implements NormalizerInterface
     /**
      * {@inheritdoc}
      */
-    public function supportsNormalization($data, $format = null)
+    public function hasCacheableSupportsMethod(): bool
+    {
+        return
+            $this->decoratedNormalizer instanceof CacheableSupportsMethodInterface
+            && $this->decoratedNormalizer->hasCacheableSupportsMethod();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function supportsNormalization($data, string $format = null)
     {
         return $this->decoratedNormalizer->supportsNormalization(...func_get_args());
     }
@@ -28,7 +39,7 @@ class UnusedDefinitionRemover implements NormalizerInterface
     /**
      * {@inheritdoc}
      */
-    public function normalize($object, $format = null, array $context = [])
+    public function normalize($object, string $format = null, array $context = [])
     {
         $response = $this->decoratedNormalizer->normalize(...func_get_args());
         $usedDefinitions = $this->getUsedDefinitions($response);
@@ -51,14 +62,14 @@ class UnusedDefinitionRemover implements NormalizerInterface
 
     private function getUsedDefinitions($object)
     {
-        $definitions = [];
+        $usedDefinitions = [];
 
         foreach ($object['paths'] as $endpointSpec) {
             foreach ($endpointSpec as $methodSpec) {
                 foreach ($methodSpec['responses'] as $responseSpec) {
                     $ref = $this->getResponseRef($responseSpec);
                     if ($ref) {
-                        $definitions[] = $this->cleanRef($ref);
+                        $usedDefinitions[] = $this->cleanRef($ref);
                     }
                 }
 
@@ -67,28 +78,34 @@ class UnusedDefinitionRemover implements NormalizerInterface
                         continue;
                     }
                     $ref = $parameter['schema']['$ref'];
-                    if (!in_array($ref, $definitions)) {
-                        $definitions[] = $this->cleanRef($ref);
+                    if (!in_array($ref, $usedDefinitions)) {
+                        $usedDefinitions[] = $this->cleanRef($ref);
                     }
                 }
             }
         }
 
-        foreach ($object['definitions'] as $modelSpec) {
+        $definitions = $object['definitions']->getArrayCopy() ?? [];
+        foreach ($definitions as $name => $modelSpec) {
+
+            if (!isset($modelSpec['properties'])) {
+                continue;
+            }
+
             foreach ($modelSpec['properties'] as $propertySpec) {
                 if (!isset($propertySpec['$ref'])) {
                     continue;
                 }
 
                 $ref = $propertySpec['$ref'];
-                if (!in_array($ref, $definitions)) {
-                    $definitions[] = $this->cleanRef($ref);
+                if (!in_array($ref, $usedDefinitions)) {
+                    $usedDefinitions[] = $this->cleanRef($ref);
                 }
             }
         }
 
         return $this->findNestedDefinitions(
-            $definitions,
+            $usedDefinitions,
             $object['definitions']
         );
     }
@@ -100,7 +117,14 @@ class UnusedDefinitionRemover implements NormalizerInterface
         foreach ($usedDefinitions as $definitionName) {
             $response[] = $definitionName;
 
-            $definitionSpec = $definitions[$definitionName];
+            $definitionSpec = $definitions->offsetExists($definitionName)
+                ? $definitions[$definitionName]
+                : [];
+
+            if (!isset($definitionSpec['properties'])) {
+                continue;
+            }
+
             foreach ($definitionSpec['properties'] as $propertySpec) {
                 $ref = $propertySpec['$ref'] ?? $propertySpec['items']['$ref'] ?? null;
                 if (!$ref) {
@@ -127,7 +151,7 @@ class UnusedDefinitionRemover implements NormalizerInterface
     {
 
         if (!isset($responseSpec['schema'])) {
-            return;
+            return null;
         }
 
         if (isset($responseSpec['schema']['$ref'])) {

@@ -8,6 +8,8 @@ use ApiPlatform\Core\Metadata\Resource\Factory\ResourceMetadataFactoryInterface;
 use Doctrine\Common\Persistence\ManagerRegistry;
 use Doctrine\ORM\QueryBuilder;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\Serializer\NameConverter\NameConverterInterface;
 
 /**
  * @inheritdoc
@@ -20,14 +22,22 @@ class OrderFilter extends BaseOrderFilter
 
     public function __construct(
         ManagerRegistry $managerRegistry,
-        $requestStack = null,
+        ?RequestStack $requestStack = null,
         $orderParameterName,
         LoggerInterface $logger = null,
         array $properties = null,
+        NameConverterInterface $nameConverter = null,
         ResourceMetadataFactoryInterface $resourceMetadataFactory
     ) {
         $this->resourceMetadataFactory = $resourceMetadataFactory;
-        parent::__construct($managerRegistry, $requestStack, $orderParameterName, $logger, $properties);
+        parent::__construct(
+            $managerRegistry,
+            $requestStack,
+            $orderParameterName,
+            $logger,
+            $properties,
+            $nameConverter
+        );
     }
 
     /**

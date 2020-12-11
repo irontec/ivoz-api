@@ -4,6 +4,7 @@ namespace Ivoz\Api\Swagger\Metadata\Property;
 
 use ApiPlatform\Core\Api\IdentifiersExtractorInterface;
 use ApiPlatform\Core\Metadata\Property\Factory\PropertyNameCollectionFactoryInterface;
+use Ivoz\Core\Domain\Model\EntityInterface;
 
 class IdentifiersExtractor implements IdentifiersExtractorInterface
 {
@@ -13,12 +14,6 @@ class IdentifiersExtractor implements IdentifiersExtractorInterface
         IdentifiersExtractorInterface $decoratedIdentifiersExtractor,
         PropertyNameCollectionFactoryInterface $propertyNameCollectionFactory
     ) {
-        $reflection = new \ReflectionClass($decoratedIdentifiersExtractor);
-        $property = $reflection->getProperty('propertyNameCollectionFactory');
-        $property->setAccessible(true);
-        $property->setValue($decoratedIdentifiersExtractor, $propertyNameCollectionFactory);
-        $property->setAccessible(false);
-
         $this->decoratedIdentifiersExtractor = $decoratedIdentifiersExtractor;
     }
 
@@ -27,7 +22,13 @@ class IdentifiersExtractor implements IdentifiersExtractorInterface
      */
     public function getIdentifiersFromItem($item): array
     {
-        return $this->decoratedIdentifiersExtractor->getIdentifiersFromItem(...func_get_args());
+        if ($item instanceof EntityInterface) {
+            return $this->decoratedIdentifiersExtractor->getIdentifiersFromItem(
+                ...func_get_args()
+            );
+        }
+
+        return [''];
     }
 
     /**
@@ -35,6 +36,8 @@ class IdentifiersExtractor implements IdentifiersExtractorInterface
      */
     public function getIdentifiersFromResourceClass(string $resourceClass): array
     {
-        return $this->decoratedIdentifiersExtractor->getIdentifiersFromResourceClass(...func_get_args());
+        return $this->decoratedIdentifiersExtractor->getIdentifiersFromResourceClass(
+            ...func_get_args()
+        );
     }
 }

@@ -11,7 +11,7 @@ use Ivoz\Api\Entity\Serializer\Normalizer\DateTimeNormalizerInterface;
 use Ivoz\Core\Application\DataTransferObjectInterface;
 use Ivoz\Core\Application\Service\Assembler\DtoAssembler;
 use Ivoz\Core\Domain\Model\EntityInterface;
-use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 /**
@@ -34,7 +34,7 @@ class EntityNormalizer implements NormalizerInterface
         DtoAssembler $dtoAssembler,
         DateTimeNormalizerInterface $dateTimeNormalizer,
         PropertyNameCollectionFactory $propertyNameCollectionFactory,
-        TokenStorage $tokenStorage
+        TokenStorageInterface $tokenStorage
     ) {
         $this->resourceClassResolver = $resourceClassResolver;
         $this->resourceMetadataFactory = $resourceMetadataFactory;
@@ -218,11 +218,9 @@ class EntityNormalizer implements NormalizerInterface
 
         $token = $this->tokenStorage->getToken();
         $roles = $token
-            ? $token->getRoles()
+            ? $token->getRoleNames()
             : [];
-        $role = !empty($roles)
-            ? $roles[0]->getRole()
-            : null;
+        $role = current($roles);
 
         $rawData = $this->filterProperties(
             $dto->normalize($normalizationContext, $role),

@@ -9,9 +9,9 @@ use Doctrine\Common\Collections\Criteria;
 use Doctrine\Common\Persistence\ObjectRepository;
 use Ivoz\Core\Infrastructure\Persistence\Doctrine\Model\Helper\CriteriaHelper;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 class DataAccessControlParser
 {
@@ -43,7 +43,7 @@ class DataAccessControlParser
 
     public function __construct(
         RequestStack $requestStack,
-        TokenStorage $tokenStorage,
+        TokenStorageInterface $tokenStorage,
         ResourceMetadataFactoryInterface $resourceMetadataFactory,
         AccessControlEvaluator $accessControlEvaluator
     ) {

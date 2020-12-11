@@ -259,11 +259,12 @@ final class DynamicLoadingExtension implements QueryItemExtensionInterface, Quer
                     continue;
                 }
 
-                if ($targetClassMetadata->hasField($property)) {
-                    $select[] = $property;
-                }
+                $embedddedProperty = array_key_exists(  
+                    $property,
+                    $targetClassMetadata->embeddedClasses
+                );
 
-                if (array_key_exists($property, $targetClassMetadata->embeddedClasses)) {
+                if ($embedddedProperty) {
                     $embeddedProperties = $this->propertyNameCollectionFactory->create(
                         $targetClassMetadata->embeddedClasses[$property]['class']
                     );
@@ -279,6 +280,8 @@ final class DynamicLoadingExtension implements QueryItemExtensionInterface, Quer
                             $select[] = $propertyName;
                         }
                     }
+                } else if ($targetClassMetadata->hasField($property)) {
+                    $select[] = $property;
                 }
             }
 

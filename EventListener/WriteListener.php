@@ -10,7 +10,7 @@ use Ivoz\Core\Domain\Model\EntityInterface;
 use Ivoz\Core\Domain\Service\EntityPersisterInterface;
 use Symfony\Component\DependencyInjection\ExpressionLanguage;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Event\GetResponseForControllerResultEvent;
+use Symfony\Component\HttpKernel\Event\ViewEvent;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 final class WriteListener
@@ -42,10 +42,8 @@ final class WriteListener
 
     /**
      * Persists, updates or delete data return by the controller if applicable.
-     *
-     * @param GetResponseForControllerResultEvent $event
      */
-    public function onKernelView(GetResponseForControllerResultEvent $event)
+    public function onKernelView(ViewEvent $event)
     {
         $request = $event->getRequest();
         if ($request->isMethodSafe(false)) {

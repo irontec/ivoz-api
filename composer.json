@@ -3,6 +3,7 @@
     "description": "Api library built on api-platform for ivozprovider",
     "license": "GPL-3.0-or-later",
     "minimum-stability": "dev",
+    "prefer-stable": true,
     "authors": [
         {
             "name": "Carlos Cruz",
@@ -17,24 +18,23 @@
             "email": "mikel@irontec.com"
         }
     ],
-    "minimum-stability": "dev",
     "autoload": {
         "psr-4": {
             "Ivoz\\Api\\": ""
         }
     },
     "require": {
-        "php": ">=7.0.19",
-        "api-platform/core": "2.2.*",
-        "irontec/ivoz-core": "^3.0",
-        "gesdinet/jwt-refresh-token-bundle": "^0.6.2",
+        "php": ">=7.4",
+        "api-platform/core": "^2.5",
+        "irontec/ivoz-core": "^4.0",
+        "gesdinet/jwt-refresh-token-bundle": "^0.9.1",
         "graze/guzzle-jsonrpc": "3.2.*",
         "guzzlehttp/guzzle": "^6.3",
         "lexik/jwt-authentication-bundle": "^2.5",
-        "symfony/expression-language": "3.4.*",
-        "symfony/finder": "3.4.*",
-        "symfony/http-foundation": "3.4.*",
-        "symfony/serializer": "3.4.*"
+        "symfony/expression-language": "^5.1",
+        "symfony/finder": "^5.1",
+        "symfony/http-foundation": "^5.1",
+        "symfony/serializer": "^5.1"
     },
     "require-dev": {
     }
