@@ -14,8 +14,9 @@ use Ivoz\Core\Application\Service\CreateEntityFromDto;
 use Ivoz\Core\Application\Service\UpdateEntityFromDto;
 use Ivoz\Core\Domain\Model\EntityInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 
 /**
@@ -43,7 +44,7 @@ class EntityDenormalizer implements DenormalizerInterface
         PropertyNameCollectionFactory $propertyNameCollectionFactory,
         PropertyMetadataFactoryInterface $propertyMetadataFactory,
         DataAccessControlParser $dataAccessControlParser,
-        TokenStorage $tokenStorage,
+        TokenStorageInterface $tokenStorage,
         RequestStack $requestStack
     ) {
         $this->createEntityFromDto = $createEntityFromDto;
@@ -61,7 +62,7 @@ class EntityDenormalizer implements DenormalizerInterface
     /**
      * {@inheritdoc}
      */
-    public function supportsDenormalization($data, $type, $format = null)
+    public function supportsDenormalization($data, $type, string $format = null)
     {
         return class_exists($type . 'Dto');
     }
@@ -71,15 +72,19 @@ class EntityDenormalizer implements DenormalizerInterface
      *
      * @throws InvalidArgumentException
      */
-    public function denormalize($data, $class, $format = null, array $context = [])
+    public function denormalize($data, $class, string $format = null, array $context = [])
     {
         $data = $this->denormalizeDateTimes($data, $class);
 
         $files = $this->requestStack->getCurrentRequest()->files;
+        /**
+         * @var string $name
+         * @var UploadedFile $file
+         */
         foreach ($files->all() as $name => $file) {
             $name = lcfirst($name);
             $data[$name] = [
-                'fileSize' => $file->getClientSize(),
+                'fileSize' => $file->getSize(),
                 'mimeType' => $file->getClientMimeType(),
                 'baseName' => $file->getClientOriginalName(),
             ];
@@ -182,11 +187,9 @@ class EntityDenormalizer implements DenormalizerInterface
 
         $token = $this->tokenStorage->getToken();
         $roles = $token
-            ? $token->getRoles()
+            ? $token->getRoleNames()
             : [];
-        $role = !empty($roles)
-            ? $roles[0]->getRole()
-            : null;
+        $role = current($roles);
 
         $dto->denormalize(
             $data,

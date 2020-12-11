@@ -5,14 +5,14 @@ namespace Ivoz\Api\Symfony\EventListener;
 use Ivoz\Api\Symfony\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\FileBag;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Event\GetResponseEvent;
+use Symfony\Component\HttpKernel\Event\RequestEvent;
 
 /**
  * Based on https://github.com/symfony/symfony/pull/10381/
 */
 class MultipartRequestListener
 {
-    public function onKernelRequest(GetResponseEvent $event)
+    public function onKernelRequest(RequestEvent $event)
     {
         $request = $event->getRequest();
 

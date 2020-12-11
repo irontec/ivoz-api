@@ -2,6 +2,7 @@
 
 namespace Ivoz\Api\Doctrine\Orm\Filter;
 
+use ApiPlatform\Core\Api\IdentifiersExtractorInterface;
 use ApiPlatform\Core\Api\IriConverterInterface;
 use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter as BaseSearchFilter;
 use ApiPlatform\Core\Bridge\Doctrine\Orm\Util\QueryNameGeneratorInterface;
@@ -12,7 +13,9 @@ use Doctrine\ORM\QueryBuilder;
 use Ivoz\Core\Domain\Model\Helper\DateTimeHelper;
 use Psr\Log\LoggerInterface;
 use Symfony\Bridge\Doctrine\ManagerRegistry;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
+use Symfony\Component\Serializer\NameConverter\NameConverterInterface;
 
 /**
  * @inheritdoc
@@ -27,11 +30,13 @@ class SearchFilter extends BaseSearchFilter
 
     public function __construct(
         ManagerRegistry $managerRegistry,
-        $requestStack = null,
+        ?RequestStack $requestStack = null,
         IriConverterInterface $iriConverter,
         PropertyAccessorInterface $propertyAccessor = null,
         LoggerInterface $logger = null,
         array $properties = null,
+        IdentifiersExtractorInterface $identifiersExtractor = null,
+        NameConverterInterface $nameConverter = null,
         ResourceMetadataFactoryInterface $resourceMetadataFactory
     ) {
         $this->resourceMetadataFactory = $resourceMetadataFactory;
@@ -42,7 +47,9 @@ class SearchFilter extends BaseSearchFilter
             $iriConverter,
             $propertyAccessor,
             $logger,
-            $properties
+            $properties,
+            $identifiersExtractor,
+            $nameConverter
         );
     }
 

@@ -3,8 +3,8 @@
 namespace Ivoz\Api\Entity\Serializer\Normalizer;
 
 use ApiPlatform\Core\Metadata\Property\Factory\PropertyMetadataFactoryInterface;
-use Doctrine\Common\Persistence\Mapping\ClassMetadataFactory;
 use Doctrine\DBAL\Types\Type as DBALType;
+use Doctrine\ORM\EntityManagerInterface;
 use Ivoz\Core\Infrastructure\Symfony\HttpFoundation\RequestDateTimeResolver;
 
 class DateTimeNormalizer implements DateTimeNormalizerInterface
@@ -14,11 +14,11 @@ class DateTimeNormalizer implements DateTimeNormalizerInterface
     private $requestDateTimeResolver;
 
     public function __construct(
-        ClassMetadataFactory $classMetadataFactory,
+        EntityManagerInterface $em,
         PropertyMetadataFactoryInterface $propertyMetadataFactory,
         RequestDateTimeResolver $requestDateTimeResolver
     ) {
-        $this->classMetadataFactory = $classMetadataFactory;
+        $this->classMetadataFactory = $em->getMetadataFactory();
         $this->propertyMetadataFactory = $propertyMetadataFactory;
         $this->requestDateTimeResolver = $requestDateTimeResolver;
     }

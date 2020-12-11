@@ -3,9 +3,10 @@
 namespace Ivoz\Api\Swagger\Serializer\DocumentationNormalizer;
 
 use ApiPlatform\Core\Metadata\Property\Factory\PropertyMetadataFactoryInterface;
+use Symfony\Component\Serializer\Normalizer\CacheableSupportsMethodInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
-class OrphanAttributeFixerDecorator implements NormalizerInterface
+class OrphanAttributeFixerDecorator implements NormalizerInterface, CacheableSupportsMethodInterface
 {
     /**
      * @var NormalizerInterface
@@ -28,7 +29,17 @@ class OrphanAttributeFixerDecorator implements NormalizerInterface
     /**
      * {@inheritdoc}
      */
-    public function supportsNormalization($data, $format = null)
+    public function hasCacheableSupportsMethod(): bool
+    {
+        return
+            $this->decoratedNormalizer instanceof CacheableSupportsMethodInterface
+            && $this->decoratedNormalizer->hasCacheableSupportsMethod();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function supportsNormalization($data, string $format = null)
     {
         return $this->decoratedNormalizer->supportsNormalization(...func_get_args());
     }
@@ -36,7 +47,7 @@ class OrphanAttributeFixerDecorator implements NormalizerInterface
     /**
      * {@inheritdoc}
      */
-    public function normalize($object, $format = null, array $context = [])
+    public function normalize($object, string $format = null, array $context = [])
     {
         $response = $this->decoratedNormalizer->normalize(...func_get_args());
 
@@ -54,6 +65,10 @@ class OrphanAttributeFixerDecorator implements NormalizerInterface
             $entityDefinition = $response['definitions'][$name];
 
             if (!$entityDefinition) {
+                continue;
+            }
+
+            if (!isset($entityDefinition['properties'])) {
                 continue;
             }
 

@@ -11,6 +11,7 @@ use Behatch\HttpCall\Request;
 use Ivoz\Provider\Domain\Model\Administrator\AdministratorRepository;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\HttpKernel\KernelInterface;
 
 /**
  * Defines application features from the specific context.
@@ -47,7 +48,7 @@ class FeatureContext extends RawMinkContext implements Context, SnippetAccepting
      * context constructor through behat.yml.
      */
     public function __construct(
-        \AppKernel $kernel,
+        KernelInterface $kernel,
         Request $request
     ) {
         $this->cacheDir = $kernel->getCacheDir();

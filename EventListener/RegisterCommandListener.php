@@ -8,11 +8,10 @@ use Ivoz\Core\Application\RequestId;
 use Ivoz\Core\Domain\Model\EntityInterface;
 use Ivoz\Core\Domain\Service\DomainEventPublisher;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Event\GetResponseEvent;
-use Symfony\Component\HttpKernel\Event\GetResponseForControllerResultEvent;
+use Symfony\Component\HttpKernel\Event\ViewEvent;
 use Symfony\Component\HttpKernel\Exception\NotAcceptableHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 final class RegisterCommandListener
 {
@@ -27,7 +26,7 @@ final class RegisterCommandListener
     public function __construct(
         DomainEventPublisher $eventPublisher,
         RequestId $requestId,
-        TokenStorage $tokenStorage
+        TokenStorageInterface $tokenStorage
     ) {
         $this->eventPublisher = $eventPublisher;
         $this->tokenStorage = $tokenStorage;
@@ -37,12 +36,10 @@ final class RegisterCommandListener
     /**
      * Sets the applicable format to the HttpFoundation Request.
      *
-     * @param GetResponseForControllerResultEvent $event
-     *
      * @throws NotFoundHttpException
      * @throws NotAcceptableHttpException
      */
-    public function onKernelRequest(GetResponseEvent $event)
+    public function onKernelView(ViewEvent $event)
     {
         /** @var Request $request */
         $request = $event->getRequest();

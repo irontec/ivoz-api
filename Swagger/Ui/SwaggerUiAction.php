@@ -42,7 +42,7 @@ final class SwaggerUiAction
         ResourceNameCollectionFactoryInterface $resourceNameCollectionFactory,
         ResourceMetadataFactoryInterface $resourceMetadataFactory,
         NormalizerInterface $normalizer,
-        \Twig_Environment $twig,
+        \Twig\Environment $twig,
         UrlGeneratorInterface $urlGenerator,
         string $title = '',
         string $description = '',

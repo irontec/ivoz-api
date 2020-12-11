@@ -2,9 +2,10 @@
 
 namespace Ivoz\Api\Swagger\Serializer\DocumentationNormalizer;
 
+use Symfony\Component\Serializer\Normalizer\CacheableSupportsMethodInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
-class CustomParameterDecorator implements NormalizerInterface
+class CustomParameterDecorator implements NormalizerInterface, CacheableSupportsMethodInterface
 {
     /**
      * @var NormalizerInterface
@@ -20,7 +21,17 @@ class CustomParameterDecorator implements NormalizerInterface
     /**
      * {@inheritdoc}
      */
-    public function supportsNormalization($data, $format = null)
+    public function hasCacheableSupportsMethod(): bool
+    {
+        return
+            $this->decoratedNormalizer instanceof CacheableSupportsMethodInterface
+            && $this->decoratedNormalizer->hasCacheableSupportsMethod();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function supportsNormalization($data, string $format = null)
     {
         return $this->decoratedNormalizer->supportsNormalization(...func_get_args());
     }
@@ -28,7 +39,7 @@ class CustomParameterDecorator implements NormalizerInterface
     /**
      * {@inheritdoc}
      */
-    public function normalize($object, $format = null, array $context = [])
+    public function normalize($object, string $format = null, array $context = [])
     {
         $response = $this->decoratedNormalizer->normalize(...func_get_args());
 

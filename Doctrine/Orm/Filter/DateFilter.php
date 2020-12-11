@@ -9,6 +9,8 @@ use Doctrine\Common\Persistence\ManagerRegistry;
 use Doctrine\ORM\QueryBuilder;
 use Ivoz\Core\Domain\Model\Helper\DateTimeHelper;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\Serializer\NameConverter\NameConverterInterface;
 
 /**
  * @inheritdoc
@@ -23,14 +25,21 @@ class DateFilter extends BaseDateFilter
 
     public function __construct(
         ManagerRegistry $managerRegistry,
-        $requestStack = null,
+        ?RequestStack $requestStack = null,
         LoggerInterface $logger = null,
         array $properties = null,
+        NameConverterInterface $nameConverter = null,
         ResourceMetadataFactoryInterface $resourceMetadataFactory
     ) {
         $this->resourceMetadataFactory = $resourceMetadataFactory;
         $this->requestStack = $requestStack;
-        parent::__construct($managerRegistry, $requestStack, $logger, $properties);
+        parent::__construct(
+            $managerRegistry,
+            $requestStack,
+            $logger,
+            $properties,
+            $nameConverter
+        );
     }
 
     /**

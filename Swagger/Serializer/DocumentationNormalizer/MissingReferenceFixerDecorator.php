@@ -11,9 +11,10 @@ use ApiPlatform\Core\Metadata\Resource\Factory\ResourceMetadataFactoryInterface;
 use ApiPlatform\Core\Metadata\Resource\ResourceMetadata;
 use Symfony\Component\PropertyInfo\Type;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
+use Symfony\Component\Serializer\Normalizer\CacheableSupportsMethodInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
-class MissingReferenceFixerDecorator implements NormalizerInterface
+class MissingReferenceFixerDecorator implements NormalizerInterface, CacheableSupportsMethodInterface
 {
     /**
      * @var NormalizerInterface
@@ -64,7 +65,17 @@ class MissingReferenceFixerDecorator implements NormalizerInterface
     /**
      * {@inheritdoc}
      */
-    public function supportsNormalization($data, $format = null)
+    public function hasCacheableSupportsMethod(): bool
+    {
+        return
+            $this->decoratedNormalizer instanceof CacheableSupportsMethodInterface
+            && $this->decoratedNormalizer->hasCacheableSupportsMethod();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function supportsNormalization($data, string $format = null)
     {
         return $this->decoratedNormalizer->supportsNormalization(...func_get_args());
     }
@@ -72,7 +83,7 @@ class MissingReferenceFixerDecorator implements NormalizerInterface
     /**
      * {@inheritdoc}
      */
-    public function normalize($object, $format = null, array $context = [])
+    public function normalize($object, string $format = null, array $context = [])
     {
         $response = $this->decoratedNormalizer->normalize(...func_get_args());
         $response['definitions'] = $this->registerPendingDefinitions(
@@ -329,6 +340,11 @@ class MissingReferenceFixerDecorator implements NormalizerInterface
         }
 
         foreach ($definitions as $definition) {
+
+            if (!isset($definition['properties'])) {
+                continue;
+            }
+
             foreach ($definition['properties'] as $property) {
                 if (!isset($property['$ref'])) {
                     continue;

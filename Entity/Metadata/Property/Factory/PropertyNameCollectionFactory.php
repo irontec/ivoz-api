@@ -6,7 +6,7 @@ use ApiPlatform\Core\Metadata\Property\Factory\PropertyMetadataFactoryInterface;
 use ApiPlatform\Core\Metadata\Property\Factory\PropertyNameCollectionFactoryInterface;
 use ApiPlatform\Core\Metadata\Property\PropertyNameCollection;
 use ApiPlatform\Core\Metadata\Resource\Factory\ResourceNameCollectionFactoryInterface;
-use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Serializer\Normalizer\PropertyNormalizer;
 
 class PropertyNameCollectionFactory implements PropertyNameCollectionFactoryInterface
@@ -26,7 +26,7 @@ class PropertyNameCollectionFactory implements PropertyNameCollectionFactoryInte
     public function __construct(
         PropertyMetadataFactoryInterface $propertyMetadataFactory,
         ResourceNameCollectionFactoryInterface $resourceNameCollectionFactory,
-        TokenStorage $tokenStorage,
+        TokenStorageInterface $tokenStorage,
         string $defaultRole = null
     ) {
         $this->propertyMetadataFactory = $propertyMetadataFactory;
@@ -50,17 +50,19 @@ class PropertyNameCollectionFactory implements PropertyNameCollectionFactoryInte
             $context = $options['serializer_groups'][0];
         }
 
+        $attributes = [];
         $resourceDtoClass = $resourceClass . 'Dto';
+
         if (class_exists($resourceDtoClass)) {
             $skipRoles = isset($options['skipRoles']) && $options['skipRoles'];
             $role = null;
             if (!$skipRoles) {
                 $token = $this->tokenStorage->getToken();
                 $roles = $token
-                    ? $token->getRoles()
+                    ? $token->getRoleNames()
                     : [];
                 $role = !empty($roles)
-                    ? $roles[0]->getRole()
+                    ? $roles[0]
                     : $this->defaultRole;
             }
 
@@ -69,6 +71,7 @@ class PropertyNameCollectionFactory implements PropertyNameCollectionFactoryInte
                 $context,
                 $role
             );
+
             $attributes = $this->normalizePropertyMap($propertyMap);
             $expandSubResources = isset($options['expandSubResources']) && $options['expandSubResources'];
 
@@ -86,13 +89,19 @@ class PropertyNameCollectionFactory implements PropertyNameCollectionFactoryInte
                 }
 
                 $propertyMetadata = $this->propertyMetadataFactory->create($resourceClass, $value);
-                $targetClass = $propertyMetadata->getType()->getClassName();
+                $propertyType = $propertyMetadata->getType();
 
+                if (is_null($propertyType)) {
+                    unset($attributes[$key]);
+                    continue;
+                }
+
+                $targetClass = $propertyType->getClassName();
                 if (!in_array($targetClass, $this->mappedClasses)) {
                     unset($attributes[$key]);
                 }
             }
-        } else {
+        } else if (class_exists($resourceClass)) {
             $attributes = $this->inspectAttributes($resourceClass);
         }
 

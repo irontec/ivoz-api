@@ -3,9 +3,10 @@
 namespace Ivoz\Api\Swagger\Serializer\DocumentationNormalizer;
 
 use Ivoz\Core\Application\DataTransferObjectInterface;
+use Symfony\Component\Serializer\Normalizer\CacheableSupportsMethodInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
-class ReferenceFixerDecorator implements NormalizerInterface
+class ReferenceFixerDecorator implements NormalizerInterface, CacheableSupportsMethodInterface
 {
     /**
      * @var NormalizerInterface
@@ -21,7 +22,17 @@ class ReferenceFixerDecorator implements NormalizerInterface
     /**
      * {@inheritdoc}
      */
-    public function supportsNormalization($data, $format = null)
+    public function hasCacheableSupportsMethod(): bool
+    {
+        return
+            $this->decoratedNormalizer instanceof CacheableSupportsMethodInterface
+            && $this->decoratedNormalizer->hasCacheableSupportsMethod();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function supportsNormalization($data, string $format = null)
     {
         return $this->decoratedNormalizer->supportsNormalization(...func_get_args());
     }
@@ -29,7 +40,7 @@ class ReferenceFixerDecorator implements NormalizerInterface
     /**
      * {@inheritdoc}
      */
-    public function normalize($object, $format = null, array $context = [])
+    public function normalize($object, string $format = null, array $context = [])
     {
         $response = $this->decoratedNormalizer->normalize(...func_get_args());
         $response['definitions'] = $this->fixRelationReferences($response['definitions']);
