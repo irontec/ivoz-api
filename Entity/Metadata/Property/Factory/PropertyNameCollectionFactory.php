@@ -7,7 +7,9 @@ use ApiPlatform\Core\Metadata\Property\Factory\PropertyNameCollectionFactoryInte
 use ApiPlatform\Core\Metadata\Property\PropertyNameCollection;
 use ApiPlatform\Core\Metadata\Resource\Factory\ResourceNameCollectionFactoryInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\PropertyNormalizer;
+use Symfony\Component\Serializer\SerializerInterface;
 
 class PropertyNameCollectionFactory implements PropertyNameCollectionFactoryInterface
 {
@@ -22,6 +24,7 @@ class PropertyNameCollectionFactory implements PropertyNameCollectionFactoryInte
     protected $mappedClasses;
     protected $tokenStorage;
     protected $defaultRole;
+    private $dummyNormalizer;
 
     public function __construct(
         PropertyMetadataFactoryInterface $propertyMetadataFactory,
@@ -38,6 +41,15 @@ class PropertyNameCollectionFactory implements PropertyNameCollectionFactoryInte
         foreach ($resourceNameCollection as $fqdn) {
             $this->mappedClasses[] = $fqdn;
         }
+
+        $this->dummyNormalizer = new class implements NormalizerInterface, SerializerInterface {
+            public function supportsNormalization($data, string $format = null) {
+                return true;
+            }
+            public function normalize($object, string $format = null, array $context = []) {  }
+            public function serialize($data, string $format, array $context = []) {}
+            public function deserialize($data, string $type, string $format, array $context = []) {}
+        };
     }
 
     /**
@@ -96,7 +108,12 @@ class PropertyNameCollectionFactory implements PropertyNameCollectionFactoryInte
                     continue;
                 }
 
-                $targetClass = $propertyType->getClassName();
+                $targetClass = str_replace(
+                    'Interface',
+                    '',
+                    $propertyType->getClassName()
+                );
+
                 if (!in_array($targetClass, $this->mappedClasses)) {
                     unset($attributes[$key]);
                 }
@@ -115,6 +132,7 @@ class PropertyNameCollectionFactory implements PropertyNameCollectionFactoryInte
         }
 
         $normalizer = new PropertyNormalizer();
+        $normalizer->setSerializer($this->dummyNormalizer);
         $reflectionClass = new \ReflectionClass($resourceClass);
         $class = $reflectionClass->newInstanceWithoutConstructor();
         $classState = $normalizer->normalize($class);
