@@ -126,7 +126,7 @@ class SearchFilter extends BaseSearchFilter
      *
      * @return string
      */
-    private function getType(string $doctrineType): string
+    protected function getType(string $doctrineType): string
     {
         switch ($doctrineType) {
             case Type::TARRAY:
@@ -184,7 +184,7 @@ class SearchFilter extends BaseSearchFilter
     /**
      * @inherit
      */
-    protected function normalizeValues(array $values): array
+    protected function normalizeValues(array $values, string $property): ?array
     {
         foreach ($values as $key => $value) {
             if (!is_numeric($key) && $key !== self::STRATEGY_PARTIAL) {
