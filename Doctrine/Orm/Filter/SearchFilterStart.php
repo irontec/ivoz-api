@@ -20,7 +20,7 @@ class SearchFilterStart extends SearchFilter
     /**
      * @inherit
      */
-    protected function normalizeValues(array $values): array
+    protected function normalizeValues(array $values, string $property): ?array
     {
         foreach ($values as $key => $value) {
             if ($key !== self::STRATEGY_START) {
