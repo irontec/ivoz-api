@@ -3,6 +3,7 @@
 namespace Ivoz\Api\Entity\Serializer\Normalizer;
 
 use ApiPlatform\Core\Exception\InvalidArgumentException;
+use ApiPlatform\Core\Metadata\Property\Factory\PropertyMetadataFactoryInterface;
 use ApiPlatform\Core\Metadata\Property\PropertyNameCollection;
 use Doctrine\DBAL\Query\Expression\CompositeExpression;
 use Ivoz\Api\Core\Security\DataAccessControlParser;
@@ -28,6 +29,7 @@ class EntityDenormalizer implements DenormalizerInterface
     private $logger;
     private $dateTimeNormalizer;
     private $propertyNameCollectionFactory;
+    private $propertyMetadataFactory;
     private $dataAccessControlParser;
     protected $tokenStorage;
     private $requestStack;
@@ -39,6 +41,7 @@ class EntityDenormalizer implements DenormalizerInterface
         LoggerInterface $logger,
         DateTimeNormalizerInterface $dateTimeNormalizer,
         PropertyNameCollectionFactory $propertyNameCollectionFactory,
+        PropertyMetadataFactoryInterface $propertyMetadataFactory,
         DataAccessControlParser $dataAccessControlParser,
         TokenStorage $tokenStorage,
         RequestStack $requestStack
@@ -49,6 +52,7 @@ class EntityDenormalizer implements DenormalizerInterface
         $this->logger = $logger;
         $this->dateTimeNormalizer = $dateTimeNormalizer;
         $this->propertyNameCollectionFactory = $propertyNameCollectionFactory;
+        $this->propertyMetadataFactory = $propertyMetadataFactory;
         $this->dataAccessControlParser = $dataAccessControlParser;
         $this->tokenStorage = $tokenStorage;
         $this->requestStack = $requestStack;
@@ -123,6 +127,11 @@ class EntityDenormalizer implements DenormalizerInterface
         $input = $this->filterInputProperties(
             $input,
             $propertyNameCollection
+        );
+
+        $input = $this->filterReadOnlyProperties(
+            $class,
+            $input
         );
 
         $accessControl = $this
@@ -271,5 +280,32 @@ class EntityDenormalizer implements DenormalizerInterface
             },
             ARRAY_FILTER_USE_KEY
         );
+    }
+
+    /**
+     * @throws \ApiPlatform\Core\Exception\PropertyNotFoundException
+     */
+    private function filterReadOnlyProperties(string $class, array $input): array
+    {
+        foreach ($input as $fld => $value) {
+
+            $propertyMetadata = $this->propertyMetadataFactory->create(
+                $class,
+                $fld
+            );
+
+            if ($propertyMetadata->getType() === null) {
+                // Attribute not found, dto attribute probably
+                continue;
+            }
+
+            if ($propertyMetadata->isWritable()) {
+                continue;
+            }
+
+            unset($input[$fld]);
+        }
+
+        return $input;
     }
 }

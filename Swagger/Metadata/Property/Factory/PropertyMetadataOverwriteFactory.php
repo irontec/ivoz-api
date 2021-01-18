@@ -47,6 +47,12 @@ class PropertyMetadataOverwriteFactory implements PropertyMetadataFactoryInterfa
             $attributes['description'] ?? ''
         );
 
+        $readOnly = $attributes['readOnly'] ?? false;
+        if ($readOnly) {
+            $propertyMetadata = $propertyMetadata->withWritable(false);
+            $propertyMetadata = $propertyMetadata->withWritableLink(false);
+        }
+
         $reflectionProperty = $this->getReflectionProperty($resourceClass, $property);
         if (!$reflectionProperty) {
             return $propertyMetadata;
