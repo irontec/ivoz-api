@@ -294,8 +294,13 @@ class EntityDenormalizer implements DenormalizerInterface
                 $fld
             );
 
-            if ($propertyMetadata->getType() === null) {
+            $type = $propertyMetadata->getType();
+            if ($type === null) {
                 // Attribute not found, dto attribute probably
+                continue;
+            }
+
+            if ($type->getCollectionValueType()) {
                 continue;
             }
 
