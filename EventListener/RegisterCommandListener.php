@@ -8,6 +8,7 @@ use Ivoz\Core\Application\RequestId;
 use Ivoz\Core\Domain\Model\EntityInterface;
 use Ivoz\Core\Domain\Service\DomainEventPublisher;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Event\GetResponseEvent;
 use Symfony\Component\HttpKernel\Event\GetResponseForControllerResultEvent;
 use Symfony\Component\HttpKernel\Exception\NotAcceptableHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -41,7 +42,7 @@ final class RegisterCommandListener
      * @throws NotFoundHttpException
      * @throws NotAcceptableHttpException
      */
-    public function onKernelView(GetResponseForControllerResultEvent $event)
+    public function onKernelRequest(GetResponseEvent $event)
     {
         /** @var Request $request */
         $request = $event->getRequest();
