@@ -10,8 +10,8 @@ use Ivoz\Api\Core\Security\DataAccessControlParser;
 use Ivoz\Api\Entity\Metadata\Property\Factory\PropertyNameCollectionFactory;
 use Ivoz\Core\Application\DataTransferObjectInterface;
 use Ivoz\Core\Application\Service\Assembler\DtoAssembler;
-use Ivoz\Core\Application\Service\CreateEntityFromDTO;
-use Ivoz\Core\Application\Service\UpdateEntityFromDTO;
+use Ivoz\Core\Application\Service\CreateEntityFromDto;
+use Ivoz\Core\Application\Service\UpdateEntityFromDto;
 use Ivoz\Core\Domain\Model\EntityInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -23,8 +23,8 @@ use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
  */
 class EntityDenormalizer implements DenormalizerInterface
 {
-    private $createEntityFromDTO;
-    private $updateEntityFromDTO;
+    private $createEntityFromDto;
+    private $updateEntityFromDto;
     private $dtoAssembler;
     private $logger;
     private $dateTimeNormalizer;
@@ -35,8 +35,8 @@ class EntityDenormalizer implements DenormalizerInterface
     private $requestStack;
 
     public function __construct(
-        CreateEntityFromDTO $createEntityFromDTO,
-        UpdateEntityFromDTO $updateEntityFromDTO,
+        CreateEntityFromDto $createEntityFromDto,
+        UpdateEntityFromDto $updateEntityFromDto,
         DtoAssembler $dtoAssembler,
         LoggerInterface $logger,
         DateTimeNormalizerInterface $dateTimeNormalizer,
@@ -46,8 +46,8 @@ class EntityDenormalizer implements DenormalizerInterface
         TokenStorage $tokenStorage,
         RequestStack $requestStack
     ) {
-        $this->createEntityFromDTO = $createEntityFromDTO;
-        $this->updateEntityFromDTO = $updateEntityFromDTO;
+        $this->createEntityFromDto = $createEntityFromDto;
+        $this->updateEntityFromDto = $updateEntityFromDto;
         $this->dtoAssembler = $dtoAssembler;
         $this->logger = $logger;
         $this->dateTimeNormalizer = $dateTimeNormalizer;
@@ -250,7 +250,7 @@ class EntityDenormalizer implements DenormalizerInterface
     private function mapToEntity(string $class, EntityInterface $entity = null, DataTransferObjectInterface $dto): EntityInterface
     {
         if ($entity) {
-            $this->updateEntityFromDTO->execute(
+            $this->updateEntityFromDto->execute(
                 $entity,
                 $dto
             );
@@ -258,7 +258,7 @@ class EntityDenormalizer implements DenormalizerInterface
             return $entity;
         }
 
-        return $this->createEntityFromDTO->execute($class, $dto);
+        return $this->createEntityFromDto->execute($dto, $class);
     }
 
     /**
