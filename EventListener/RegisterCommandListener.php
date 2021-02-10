@@ -47,6 +47,9 @@ final class RegisterCommandListener
         $request = $event->getRequest();
 
         $body = json_decode($request->getContent(), true);
+        if (is_scalar($body)) {
+            $body = [$body];
+        }
         $attributes = $request->attributes->all();
 
         if (!array_key_exists('_route_params', $attributes)) {
