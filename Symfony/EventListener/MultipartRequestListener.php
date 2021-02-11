@@ -4,7 +4,6 @@ namespace Ivoz\Api\Symfony\EventListener;
 
 use Ivoz\Api\Symfony\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\FileBag;
-use Symfony\Component\HttpFoundation\ParameterBag;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\GetResponseEvent;
 
@@ -88,10 +87,9 @@ class MultipartRequestListener
                     $fileName = ($matches[2] ?? null);
                     // If we have no filename, save the data. Otherwise, save the file.
                     if ($fileName === null) {
-                        $value = substr($content, 0, -2);
-                        $data[$fieldName] = is_numeric($value)
-                            ? (0 + $value)
-                            : $value;
+                        $data[$fieldName] = is_numeric($content)
+                            ? (0 + $content)
+                            : $content;
                     } else {
                         $localFileName = tempnam(sys_get_temp_dir(), 'sfy');
                         file_put_contents($localFileName, $content);
