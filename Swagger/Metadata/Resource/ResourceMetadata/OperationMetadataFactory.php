@@ -40,6 +40,7 @@ class OperationMetadataFactory implements ResourceMetadataFactoryInterface
         $resourceMetadata = $this->decorated->create($resourceClass);
         $isEntity = in_array(EntityInterface::class, class_implements($resourceClass));
         if ($isEntity) {
+
             $resourceClassSegments = explode('\\', $resourceClass);
 
             $resourceMetadata = $this->setEntityOperationMetadata(
@@ -47,35 +48,7 @@ class OperationMetadataFactory implements ResourceMetadataFactoryInterface
                 $resourceClassSegments[1]
             );
 
-            $reflectionClass = new \ReflectionClass($resourceClass);
-            $resourceInstance = $reflectionClass->newInstanceWithoutConstructor();
-
-            $paginationToggle = $resourceMetadata->getAttribute('pagination_client_enabled', false);
-            $collectionOperations = $resourceMetadata->getCollectionOperations();
-            foreach ($collectionOperations as $name => &$operation) {
-                $showPaginationParam =
-                    $paginationToggle
-                    || $resourceMetadata->getCollectionOperationAttribute($name, 'pagination_client_enabled');
-
-                if (!$showPaginationParam) {
-                    continue;
-                }
-
-                if (strtoupper($operation['method']) !== 'GET') {
-                    continue;
-                }
-
-                $operation['swagger_context']['pagination_parameters'] = [
-                    [
-                        'name' => '_pagination',
-                        'in' => 'query',
-                        'required' => false,
-                        'type' => 'boolean'
-                    ]
-                ];
-            }
-
-            return $resourceMetadata->withCollectionOperations($collectionOperations);
+            return $resourceMetadata;
         }
 
         $manager = $this->managerRegistry->getManagerForClass($resourceClass);
