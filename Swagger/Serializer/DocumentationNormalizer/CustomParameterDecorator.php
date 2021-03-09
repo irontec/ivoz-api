@@ -43,13 +43,17 @@ class CustomParameterDecorator implements NormalizerInterface, CacheableSupports
     {
         $response = $this->decoratedNormalizer->normalize(...func_get_args());
 
-        foreach ($response['paths'] as $paths) {
+        foreach ($response['paths'] as $name => $paths) {
             foreach ($paths as $path) {
                 $pathArray = $this->setUploadParams(
                     $path->getArrayCopy()
                 );
 
                 $pathArray = $this->setPaginationParams(
+                    $pathArray
+                );
+
+                $pathArray = $this->fixAutoinjectedBodyParam(
                     $pathArray
                 );
 
@@ -107,6 +111,26 @@ class CustomParameterDecorator implements NormalizerInterface, CacheableSupports
             ...$pathArray['pagination_parameters']
         );
         unset($pathArray['pagination_parameters']);
+
+        return $pathArray;
+    }
+
+    private function fixAutoinjectedBodyParam(array $pathArray): array
+    {
+        /**
+         * Api platform is injecting a body param if none
+         * and this is causing issues with formData params
+         * https://github.com/api-platform/core/pull/3123
+         */
+        $parameters = $pathArray['parameters'] ?? [];
+        if (empty($parameters)) {
+            return $pathArray;
+        }
+
+        if (current($parameters)['in'] !== end($parameters)['in']) {
+            array_pop($parameters);
+            $pathArray['parameters'] = $parameters;
+        }
 
         return $pathArray;
     }
