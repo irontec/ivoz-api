@@ -36,8 +36,12 @@ class IdentifiersExtractor implements IdentifiersExtractorInterface
      */
     public function getIdentifiersFromResourceClass(string $resourceClass): array
     {
-        return $this->decoratedIdentifiersExtractor->getIdentifiersFromResourceClass(
-            ...func_get_args()
-        );
+        try {
+            return $this->decoratedIdentifiersExtractor->getIdentifiersFromResourceClass(
+                ...func_get_args()
+            );
+        } catch (\Exception $e) {
+            return [''];
+        }
     }
 }

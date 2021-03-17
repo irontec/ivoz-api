@@ -130,6 +130,7 @@ class FileOperationMetadataFactory implements ResourceMetadataFactoryInterface
 
             $operation = [
                 'method' => 'GET',
+                'stateless' => null,
                 'path' => $path,
                 'controller' => DownloadAction::class,
                 'defaults' => [

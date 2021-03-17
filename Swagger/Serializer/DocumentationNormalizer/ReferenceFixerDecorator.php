@@ -71,7 +71,7 @@ class ReferenceFixerDecorator implements NormalizerInterface, CacheableSupportsM
                 continue;
             }
 
-            if (!array_key_exists('properties', $definitions[$key])) {
+            if (!array_key_exists('properties', $definitions[$key]->getArrayCopy())) {
                 continue;
             }
 
@@ -89,8 +89,8 @@ class ReferenceFixerDecorator implements NormalizerInterface, CacheableSupportsM
 
     private function fixRelationProperty($property, $context = null)
     {
-        $isCollection = array_key_exists('items', $property);
-        $isReference = array_key_exists('$ref', $property);
+        $isCollection = array_key_exists('items', $property->getArrayCopy());
+        $isReference = array_key_exists('$ref', $property->getArrayCopy());
 
         if (!($isCollection || $isReference)) {
             return $property;
@@ -130,7 +130,7 @@ class ReferenceFixerDecorator implements NormalizerInterface, CacheableSupportsM
         $refSegments = explode('-', $property['$ref']);
         $property['$ref'] = $refSegments[0];
 
-        if (array_key_exists('description', $property)) {
+        if (array_key_exists('description', $property->getArrayCopy())) {
             unset($property['description']);
         }
 
