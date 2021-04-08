@@ -54,7 +54,8 @@ class CustomParameterDecorator implements NormalizerInterface, CacheableSupports
                 );
 
                 $pathArray = $this->fixAutoinjectedBodyParam(
-                    $pathArray
+                    $pathArray,
+                    $name
                 );
 
                 $path->exchangeArray($pathArray);
@@ -115,7 +116,7 @@ class CustomParameterDecorator implements NormalizerInterface, CacheableSupports
         return $pathArray;
     }
 
-    private function fixAutoinjectedBodyParam(array $pathArray): array
+    private function fixAutoinjectedBodyParam(array $pathArray, string $reqPath): array
     {
         /**
          * Api platform is injecting a body param if none
@@ -129,8 +130,22 @@ class CustomParameterDecorator implements NormalizerInterface, CacheableSupports
 
         if (current($parameters)['in'] !== end($parameters)['in']) {
             array_pop($parameters);
-            $pathArray['parameters'] = $parameters;
         }
+
+        // Filter parameters not found in path
+        foreach ($parameters as $k => $param) {
+            if ($param['in'] !== 'path') {
+                continue;
+            }
+
+            if (strpos($reqPath, '{' . $param['name'] . '}')) {
+                continue;
+            }
+
+            unset($parameters[$k]);
+        }
+
+        $pathArray['parameters'] = array_values($parameters);
 
         return $pathArray;
     }

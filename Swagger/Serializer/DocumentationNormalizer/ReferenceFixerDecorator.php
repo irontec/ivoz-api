@@ -130,7 +130,11 @@ class ReferenceFixerDecorator implements NormalizerInterface, CacheableSupportsM
         $refSegments = explode('-', $property['$ref']);
         $property['$ref'] = $refSegments[0];
 
-        if (array_key_exists('description', $property->getArrayCopy())) {
+        $arrayProperty = is_array($property)
+            ? $property
+            : $property->getArrayCopy();
+
+        if (array_key_exists('description', $arrayProperty)) {
             unset($property['description']);
         }
 
