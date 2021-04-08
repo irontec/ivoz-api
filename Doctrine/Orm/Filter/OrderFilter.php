@@ -27,6 +27,7 @@ class OrderFilter extends BaseOrderFilter
         LoggerInterface $logger = null,
         array $properties = null,
         NameConverterInterface $nameConverter = null,
+        ?string $orderNullsComparison = null,
         ResourceMetadataFactoryInterface $resourceMetadataFactory
     ) {
         $this->resourceMetadataFactory = $resourceMetadataFactory;
@@ -36,7 +37,8 @@ class OrderFilter extends BaseOrderFilter
             $orderParameterName,
             $logger,
             $properties,
-            $nameConverter
+            $nameConverter,
+            $orderNullsComparison
         );
     }
 
@@ -72,6 +74,6 @@ class OrderFilter extends BaseOrderFilter
         $metadata = $this->resourceMetadataFactory->create($resourceClass);
         $this->overrideProperties($metadata->getAttributes());
 
-        return parent::apply($queryBuilder, $queryNameGenerator, $resourceClass, $operationName, $context);
+        parent::apply($queryBuilder, $queryNameGenerator, $resourceClass, $operationName, $context);
     }
 }

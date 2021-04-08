@@ -68,14 +68,14 @@ class DateFilter extends BaseDateFilter
         $metadata = $this->resourceMetadataFactory->create($resourceClass);
         $this->overrideProperties($metadata->getAttributes());
 
-        return parent::apply($queryBuilder, $queryNameGenerator, $resourceClass, $operationName, $context);
+        parent::apply($queryBuilder, $queryNameGenerator, $resourceClass, $operationName, $context);
     }
 
     /**
      * @inherited
      * @see BaseDateFilter::addWhere
      */
-    protected function addWhere(QueryBuilder $queryBuilder, QueryNameGeneratorInterface $queryNameGenerator, string $alias, string $field, string $operator, string $value, string $nullManagement = null, $type = null)
+    protected function addWhere(QueryBuilder $queryBuilder, QueryNameGeneratorInterface $queryNameGenerator, string $alias, string $field, string $operator, $value, string $nullManagement = null, $type = null)
     {
         $value = DateTimeHelper::stringToUtc(
             $value,
@@ -83,7 +83,7 @@ class DateFilter extends BaseDateFilter
             $this->getTimezone()
         );
 
-        return parent::addWhere(...func_get_args());
+        parent::addWhere(...func_get_args());
     }
 
     private function getTimezone()
