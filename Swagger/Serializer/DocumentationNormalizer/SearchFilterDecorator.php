@@ -2,9 +2,11 @@
 
 namespace Ivoz\Api\Swagger\Serializer\DocumentationNormalizer;
 
+use Ivoz\Core\Domain\Model\EntityInterface;
 use Symfony\Component\PropertyInfo\Type;
 use Symfony\Component\Serializer\Normalizer\CacheableSupportsMethodInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
+use ApiPlatform\Core\Metadata\Property\Factory\PropertyMetadataFactoryInterface;
 
 class SearchFilterDecorator implements NormalizerInterface, CacheableSupportsMethodInterface
 {
@@ -14,14 +16,21 @@ class SearchFilterDecorator implements NormalizerInterface, CacheableSupportsMet
     protected $decoratedNormalizer;
 
     /**
+     * @var PropertyMetadataFactoryInterface
+     */
+    private $propertyMetadataFactory;
+
+    /**
      * @var \ArrayObject
      */
     protected $definitions;
 
     public function __construct(
-        NormalizerInterface $decoratedNormalizer
+        NormalizerInterface $decoratedNormalizer,
+        PropertyMetadataFactoryInterface $propertyMetadataFactory
     ) {
         $this->decoratedNormalizer = $decoratedNormalizer;
+        $this->propertyMetadataFactory = $propertyMetadataFactory;
     }
 
     /**
@@ -47,14 +56,20 @@ class SearchFilterDecorator implements NormalizerInterface, CacheableSupportsMet
      */
     public function normalize($object, string $format = null, array $context = [])
     {
+        $resourceMapping = [];
+        foreach ($object->getResourceNameCollection() as $resourceName) {
+            $resourceNameSegments = explode('\\', $resourceName);
+            $resourceMapping[$resourceName] = end($resourceNameSegments);
+        }
+
         $response = $this->decoratedNormalizer->normalize(...func_get_args());
         $this->definitions = $response['definitions'];
-        $response['paths'] = $this->fixPathParameters($response['paths']);
+        $response['paths'] = $this->fixPathParameters($response['paths'], $resourceMapping);
 
         return $response;
     }
 
-    private function fixPathParameters(\ArrayObject $paths)
+    private function fixPathParameters(\ArrayObject $paths, array $resourceMapping)
     {
         foreach ($paths as $name => $path) {
             if (strpos($name, '{') !== false) {
@@ -69,13 +84,25 @@ class SearchFilterDecorator implements NormalizerInterface, CacheableSupportsMet
                 continue;
             }
 
+            $responseDefinitionName = $path['get']['responses']['200']['schema']['items']['$ref'];
             $responseModel = $this->getDefinitionByRef(
-                $path['get']['responses']['200']['schema']['items']['$ref']
+                $responseDefinitionName
             );
 
             if (!isset($responseModel['properties']) || is_null($responseModel['properties'])) {
                 continue;
             }
+
+            $responseDefinitionSegments = explode('-', $this->cleanRef($responseDefinitionName));
+            $responseEntityName = array_search(
+                $responseDefinitionSegments[0],
+                $resourceMapping
+            );
+            $path['get']['parameters'] = $this->filterPropertiesIntoParameters(
+                $path['get']['parameters'],
+                $responseModel['properties'],
+                $responseEntityName
+            );
 
             $path['get']['parameters'] = $this->appendPropertiesIntoParameters(
                 $path['get']['parameters'],
@@ -102,6 +129,68 @@ class SearchFilterDecorator implements NormalizerInterface, CacheableSupportsMet
         $model = $this->cleanRef($ref);
 
         return $this->definitions[$model];
+    }
+
+    private function filterPropertiesIntoParameters(
+        array $parameters,
+        array $properties,
+        string $responseFqdn
+    ) {
+        $propertyNames = array_keys($properties);
+        $propertyParameters = array_filter(
+            $parameters,
+            function (array $item) use ($propertyNames, $responseFqdn) {
+                $name = $item['name'] ?? '';
+                preg_match(
+                    '/^([^[]+)(.*)/',
+                    $name,
+                    $nameMatch
+                );
+
+                if ($nameMatch[1] === '_order') {
+                    $orderFld = substr($nameMatch[2], 1, -1);
+                    return in_array(
+                        $orderFld,
+                        $propertyNames
+                    );
+                }
+
+                if ($name[0] === '_') {
+                    return true;
+                }
+
+                $responseModelProperty = in_array($nameMatch[1], $propertyNames, true);
+                if ($responseModelProperty) {
+                    return true;
+                }
+
+                if (strpos($nameMatch[1], '.')) {
+                    $segments = explode('.', $nameMatch[1]);
+                    if (in_array($segments[0], $propertyNames, true)) {
+                        return true;
+                    }
+                }
+
+                // Allow FKs
+                $property = $this->propertyMetadataFactory->create(
+                    $responseFqdn,
+                    $nameMatch[1]
+                );
+                $propertyType = $property->getType();
+                $propertyTypeClasName = $propertyType->getClassName() ?? '';
+                $isEntity = $propertyTypeClasName && in_array(
+                    EntityInterface::class,
+                    \class_implements($propertyTypeClasName)
+                );
+                if ($isEntity) {
+                    return true;
+                }
+
+                return false;
+            }
+        );
+
+        return array_values($propertyParameters);
     }
 
     private function appendPropertiesIntoParameters(array $parameters, array $properties, $prefix = '')
