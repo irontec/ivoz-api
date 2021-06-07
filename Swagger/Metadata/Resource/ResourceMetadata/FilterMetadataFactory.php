@@ -218,16 +218,6 @@ class FilterMetadataFactory implements ResourceMetadataFactoryInterface
 
     private function getEntityAttributes(string $resourceClass, ResourceMetadata $resourceMetadata): array
     {
-        $options = [
-            'expandSubResources' => true,
-            'context' => $this->getContext($resourceMetadata)
-        ];
-
-        $contextAttributes = $this->propertyNameCollectionFactory->create(
-            $resourceClass,
-            $options
-        );
-
         $allAttributes = $this->propertyNameCollectionFactory->create(
             $resourceClass,
             ['expandSubResources' => true]
@@ -243,27 +233,8 @@ class FilterMetadataFactory implements ResourceMetadataFactoryInterface
         );
 
         return array_merge(
-            iterator_to_array($contextAttributes->getIterator()),
+            iterator_to_array($allAttributes->getIterator()),
             $fkAttributes
         );
-    }
-
-    private function getContext(ResourceMetadata $resourceMetadata): string
-    {
-        $collectionOperations = $resourceMetadata->getCollectionOperations();
-
-        foreach ($collectionOperations as $collectionOperation) {
-            if ($collectionOperation['method'] !== 'GET') {
-                continue;
-            }
-
-            $normalizationContext = $collectionOperation['normalization_context']['groups'][0] ?? null;
-
-            if ($normalizationContext) {
-                return $normalizationContext;
-            }
-        }
-
-        return DataTransferObjectInterface::CONTEXT_COLLECTION;
     }
 }

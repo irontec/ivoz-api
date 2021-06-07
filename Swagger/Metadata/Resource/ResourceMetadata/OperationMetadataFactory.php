@@ -47,9 +47,6 @@ class OperationMetadataFactory implements ResourceMetadataFactoryInterface
                 $resourceClassSegments[1]
             );
 
-            $reflectionClass = new \ReflectionClass($resourceClass);
-            $resourceInstance = $reflectionClass->newInstanceWithoutConstructor();
-
             $paginationToggle = $resourceMetadata->getAttribute('pagination_client_enabled', false);
             $collectionOperations = $resourceMetadata->getCollectionOperations();
             foreach ($collectionOperations as $name => &$operation) {
