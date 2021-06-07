@@ -177,7 +177,9 @@ class SearchFilterDecorator implements NormalizerInterface, CacheableSupportsMet
                     $nameMatch[1]
                 );
                 $propertyType = $property->getType();
-                $propertyTypeClasName = $propertyType->getClassName() ?? '';
+                $propertyTypeClasName = $propertyType
+                    ? $propertyType->getClassName()
+                    : '';
                 $isEntity = $propertyTypeClasName && in_array(
                     EntityInterface::class,
                     \class_implements($propertyTypeClasName)
