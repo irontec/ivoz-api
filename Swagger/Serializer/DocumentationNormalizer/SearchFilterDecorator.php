@@ -149,8 +149,9 @@ class SearchFilterDecorator implements NormalizerInterface, CacheableSupportsMet
 
                 if ($nameMatch[1] === '_order') {
                     $orderFld = substr($nameMatch[2], 1, -1);
+                    $segments = explode('.', $orderFld);
                     return in_array(
-                        $orderFld,
+                        $segments[0],
                         $propertyNames
                     );
                 }
