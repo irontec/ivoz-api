@@ -58,6 +58,16 @@ class SearchFilterDecorator implements NormalizerInterface, CacheableSupportsMet
     {
         $resourceMapping = [];
         foreach ($object->getResourceNameCollection() as $resourceName) {
+
+            $isEntity = in_array(
+                EntityInterface::class,
+                \class_implements($resourceName)
+            );
+
+            if (!$isEntity) {
+                continue;
+            }
+
             $resourceNameSegments = explode('\\', $resourceName);
             $resourceMapping[$resourceName] = end($resourceNameSegments);
         }
