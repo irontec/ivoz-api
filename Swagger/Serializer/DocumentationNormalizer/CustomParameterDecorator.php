@@ -49,7 +49,7 @@ class CustomParameterDecorator implements NormalizerInterface, CacheableSupports
                     $path->getArrayCopy()
                 );
 
-                $pathArray = $this->setPaginationParams(
+                $pathArray = $this->fixPaginationParams(
                     $pathArray
                 );
 
@@ -101,17 +101,11 @@ class CustomParameterDecorator implements NormalizerInterface, CacheableSupports
         return $pathArray;
     }
 
-    private function setPaginationParams(array $pathArray): array
+    private function fixPaginationParams(array $pathArray): array
     {
-        if (!array_key_exists('pagination_parameters', $pathArray)) {
-            return $pathArray;
+        if (array_key_exists('pagination_parameters', $pathArray)) {
+            unset($pathArray['pagination_parameters']);
         }
-
-        array_push(
-            $pathArray['parameters'],
-            ...$pathArray['pagination_parameters']
-        );
-        unset($pathArray['pagination_parameters']);
 
         return $pathArray;
     }
