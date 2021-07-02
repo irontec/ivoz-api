@@ -91,7 +91,11 @@ class FilterMetadataFactory implements ResourceMetadataFactoryInterface
                 $filters[OrderFilter::SERVICE_NAME][$attribute] = Filter\OrderFilter::NULLS_LARGEST;
             }
 
-            if ($attribute === 'id') {
+            if ($this->isId($resourceClass, $attribute)) {
+                if ($type === 'integer') {
+                    $filters[SearchFilterExact::SERVICE_NAME][$attribute] = SearchFilter::STRATEGY_EXACT;
+                }
+
                 continue;
             }
 
@@ -189,6 +193,24 @@ class FilterMetadataFactory implements ResourceMetadataFactoryInterface
         }
 
         return $metadata['type'];
+    }
+
+    /**
+     * @return bool|null
+     */
+    private function isId(string $resourceClass, string $attribute)
+    {
+        $metadata = $this->getAttributeMetadata($resourceClass, $attribute);
+
+        if (is_null($metadata)) {
+            return false;
+        }
+
+        if (isset($metadata['id'])) {
+            return $metadata['id'];
+        }
+
+        return false;
     }
 
     private function getAttributeMetadata(string $resourceClass, string $attribute)

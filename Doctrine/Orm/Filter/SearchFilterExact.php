@@ -23,7 +23,7 @@ class SearchFilterExact extends SearchFilter
     protected function normalizeValues(array $values): array
     {
         foreach ($values as $key => $value) {
-            if ($key !== self::STRATEGY_EXACT) {
+            if ($key !== self::STRATEGY_EXACT && !is_numeric($key)) {
                 unset($values[$key]);
             }
         }
