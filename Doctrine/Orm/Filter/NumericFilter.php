@@ -46,9 +46,27 @@ class NumericFilter extends BaseNumericFilter
         $metadata = $this->resourceMetadataFactory->create($resourceClass);
         $this->overrideProperties($metadata->getAttributes());
 
-        return $this->filterDescription(
+        foreach ($this->properties as $key => $val) {
+
+        }
+
+        $description = $this->filterDescription(
             parent::getDescription($resourceClass)
         );
+
+        $metadata = $this->getClassMetadata($resourceClass);
+        foreach ($description as $fld => $spec) {
+            if (! $metadata->isIdentifier($fld)) {
+                continue;
+            }
+
+            $arrayFldName = $fld . '[]';
+            $description[$arrayFldName] = $description[$fld];
+            $description[$arrayFldName]['property'] = $arrayFldName;
+            unset($description[$fld]);
+        }
+
+        return $description;
     }
 
     /**
