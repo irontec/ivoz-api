@@ -78,7 +78,11 @@ class EntityDenormalizer implements DenormalizerInterface
         $files = $this->requestStack->getCurrentRequest()->files;
         foreach ($files->all() as $name => $file) {
             $name = lcfirst($name);
-            $data[$name] = [
+            if (!isset($data[$name])) {
+                $data[$name] = [];
+            }
+
+            $data[$name] += [
                 'fileSize' => $file->getClientSize(),
                 'mimeType' => $file->getClientMimeType(),
                 'baseName' => $file->getClientOriginalName(),
