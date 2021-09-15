@@ -106,6 +106,7 @@ class ReferenceFixerDecorator implements NormalizerInterface
     private function setContext($property, $context)
     {
         $noSublevelContexts = [
+            DataTransferObjectInterface::CONTEXT_EMPTY,
             DataTransferObjectInterface::CONTEXT_SIMPLE,
             DataTransferObjectInterface::CONTEXT_COLLECTION
         ];
