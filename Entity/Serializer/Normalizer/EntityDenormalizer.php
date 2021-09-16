@@ -91,8 +91,8 @@ class EntityDenormalizer implements DenormalizerInterface
                 'fileSize' => $file->getClientSize(),
                 'mimeType' => $file->getClientMimeType(),
                 'baseName' => $file->getClientOriginalName(),
+                'path' => $file->getPathname(),
             ];
-            $data[$name . 'Path'] = $file->getPathname();
         }
 
         $context['operation_type'] = $context['operation_normalization_context'] ?? DataTransferObjectInterface::CONTEXT_SIMPLE;
