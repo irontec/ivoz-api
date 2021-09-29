@@ -26,7 +26,7 @@
     "require": {
         "php": ">=7.4",
         "api-platform/core": "^2.5",
-        "irontec/ivoz-core": "^4.4.3",
+        "irontec/ivoz-core": "^4.4",
         "graze/guzzle-jsonrpc": "3.2.*",
         "guzzlehttp/guzzle": "^6.3",
         "lexik/jwt-authentication-bundle": "^2.5",
