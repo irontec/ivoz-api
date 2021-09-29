@@ -88,7 +88,7 @@ class EntityDenormalizer implements DenormalizerInterface
             }
 
             $data[$name] += [
-                'fileSize' => $file->getClientSize(),
+                'fileSize' => $file->getSize(),
                 'mimeType' => $file->getClientMimeType(),
                 'baseName' => $file->getClientOriginalName(),
                 'path' => $file->getPathname(),
