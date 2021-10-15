@@ -6,6 +6,7 @@ use Behat\Behat\Context\Context;
 use Behat\Behat\Context\SnippetAcceptingContext;
 use Behat\Gherkin\Node\PyStringNode;
 use Behat\Mink\Exception\ExpectationException;
+use Behat\MinkExtension\Context\MinkContext;
 use Behat\MinkExtension\Context\RawMinkContext;
 use Behatch\HttpCall\Request;
 use Ivoz\Provider\Domain\Model\Administrator\AdministratorRepository;
@@ -48,16 +49,26 @@ class FeatureContext extends RawMinkContext implements Context, SnippetAccepting
      * context constructor through behat.yml.
      */
     public function __construct(
-        KernelInterface $kernel,
-        Request $request
+        private KernelInterface $kernel
     ) {
         $this->cacheDir = $kernel->getCacheDir();
         $this->fs = new Filesystem();
-        $this->request = $request;
+
         $this->jwtTokenManager = $kernel->getContainer()->get('lexik_jwt_authentication.jwt_manager.public');
         $this->administratorRepository = $kernel->getContainer()->get(
             AdministratorRepository::class
         );
+    }
+
+    /**
+     * @BeforeScenario
+     */
+    public function gatherContext($context): void
+    {
+        /** @var MinkContext $minkContext */
+        $minkContext = $context->getEnvironment()->getContext(MinkContext::class);
+        $mink = $minkContext->getMink();
+        $this->request = new Request($mink);
     }
 
     /**
