@@ -142,6 +142,9 @@ class FileOperationMetadataFactory implements ResourceMetadataFactoryInterface
                     'responses' => [
                         '200' => [
                             'description' => $description,
+                            'schema' => [
+                                'type' => 'file'
+                            ],
                         ],
                         '404' => [
                             'description' => 'Resource not found'
