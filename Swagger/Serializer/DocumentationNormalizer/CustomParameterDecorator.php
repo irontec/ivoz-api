@@ -112,18 +112,9 @@ class CustomParameterDecorator implements NormalizerInterface, CacheableSupports
 
     private function fixAutoinjectedBodyParam(array $pathArray, string $reqPath): array
     {
-        /**
-         * Api platform is injecting a body param if none
-         * and this is causing issues with formData params
-         * https://github.com/api-platform/core/pull/3123
-         */
         $parameters = $pathArray['parameters'] ?? [];
         if (empty($parameters)) {
             return $pathArray;
-        }
-
-        if (current($parameters)['in'] !== end($parameters)['in']) {
-            array_pop($parameters);
         }
 
         // Filter parameters not found in path

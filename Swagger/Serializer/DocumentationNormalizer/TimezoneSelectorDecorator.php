@@ -126,12 +126,16 @@ class TimezoneSelectorDecorator implements NormalizerInterface, CacheableSupport
             return null;
         }
 
-        $successReponse = $path['responses'][$successCode]['schema'] ?? null;
-        if (!$successReponse) {
+        $successResponse = $path['responses'][$successCode]['schema'] ?? null;
+        if (!$successResponse) {
             return null;
         }
 
-        $ref = $successReponse['$ref'] ?? $successReponse['items']['$ref'];
+        if (array_key_exists('type', $successResponse) && $successResponse['type'] === 'file') {
+            return null;
+        }
+
+        $ref = $successResponse['$ref'] ?? $successResponse['items']['$ref'];
 
         if (!$ref) {
             return null;
