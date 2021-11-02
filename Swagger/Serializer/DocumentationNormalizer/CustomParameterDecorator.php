@@ -117,6 +117,21 @@ class CustomParameterDecorator implements NormalizerInterface, CacheableSupports
             return $pathArray;
         }
 
+        $firstParamKey = array_key_first($parameters);
+        $firstParam = $parameters[$firstParamKey];
+
+        $lastParamKey = array_key_last($parameters);
+        $lastParam = $parameters[$lastParamKey];
+
+        if ($firstParam['in'] === 'formData' && $firstParam['in'] !== $lastParam['in']) {
+            /**
+             * Api platform is injecting a body param if none
+             * and this is causing issues with formData params
+             * https://github.com/api-platform/core/pull/3123
+             */
+            unset($parameters[$lastParamKey]);
+        }
+
         // Filter parameters not found in path
         foreach ($parameters as $k => $param) {
             if ($param['in'] !== 'path') {
