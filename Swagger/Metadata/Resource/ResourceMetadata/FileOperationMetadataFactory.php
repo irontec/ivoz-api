@@ -123,9 +123,9 @@ class FileOperationMetadataFactory implements ResourceMetadataFactoryInterface
             );
 
             $description = sprintf(
-                '%s %s',
+                '#/definitions/%s_%s',
                 $resourceMetadata->getShortName(),
-                lcfirst($fileObject)
+                ucfirst($fileObject)
             );
 
             $operation = [
