@@ -27,7 +27,6 @@ class OrderFilter extends BaseOrderFilter
         LoggerInterface $logger = null,
         array $properties = null,
         NameConverterInterface $nameConverter = null,
-        ?string $orderNullsComparison = null,
         ResourceMetadataFactoryInterface $resourceMetadataFactory
     ) {
         $this->resourceMetadataFactory = $resourceMetadataFactory;
@@ -37,8 +36,7 @@ class OrderFilter extends BaseOrderFilter
             $orderParameterName,
             $logger,
             $properties,
-            $nameConverter,
-            $orderNullsComparison
+            $nameConverter
         );
     }
 
