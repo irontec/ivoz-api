@@ -25,7 +25,7 @@
     },
     "require": {
         "php": ">=7.4",
-        "api-platform/core": "^2.5",
+        "api-platform/core": "2.6.*",
         "irontec/ivoz-core": "^4.4",
         "graze/guzzle-jsonrpc": "3.2.*",
         "guzzlehttp/guzzle": "^6.3",

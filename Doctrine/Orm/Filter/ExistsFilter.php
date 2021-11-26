@@ -48,9 +48,30 @@ class ExistsFilter extends BaseExistsFilter
         $metadata = $this->resourceMetadataFactory->create($resourceClass);
         $this->overrideProperties($metadata->getAttributes());
 
-        return $this->filterDescription(
+        $description = $this->addDeprecatedExistsFilters(
             parent::getDescription($resourceClass)
         );
+
+        return $this->filterDescription(
+            $description
+        );
+    }
+
+    private function addDeprecatedExistsFilters(array $description)
+    {
+        $deprecatedDescription = [];
+        foreach ($description as $key => $value) {
+            [, $field] = explode('[', substr($key, 0, -1));
+            $deprecatedKey = $field . '[exists]';
+            $deprecatedValue = array_merge(
+                $value,
+                ['description' => 'deprecated']
+            );
+
+            $deprecatedDescription[$deprecatedKey] = $deprecatedValue;
+        }
+
+        return array_merge($deprecatedDescription, $description);
     }
 
     /**

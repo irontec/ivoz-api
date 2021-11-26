@@ -157,9 +157,9 @@ class SearchFilterDecorator implements NormalizerInterface, CacheableSupportsMet
                     $nameMatch
                 );
 
-                if ($nameMatch[1] === '_order') {
-                    $orderFld = substr($nameMatch[2], 1, -1);
-                    $segments = explode('.', $orderFld);
+                if (in_array($nameMatch[1], ['_order', 'exists'], true)) {
+                    $fld = substr($nameMatch[2], 1, -1);
+                    $segments = explode('.', $fld);
                     return in_array(
                         $segments[0],
                         $propertyNames
@@ -236,6 +236,11 @@ class SearchFilterDecorator implements NormalizerInterface, CacheableSupportsMet
             }
 
             $parameterExists = array_filter($parameters, function ($item) use ($prefix, $name) {
+
+                if (str_starts_with($item['name'], $prefix . $name . '.')) {
+                    return true;
+                }
+
                 return $item['name'] === ($prefix . $name);
             });
 

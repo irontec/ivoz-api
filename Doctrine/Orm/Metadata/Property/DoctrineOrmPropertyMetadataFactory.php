@@ -45,7 +45,10 @@ final class DoctrineOrmPropertyMetadataFactory implements PropertyMetadataFactor
                     Type::BUILTIN_TYPE_OBJECT,
                     false,
                     $field['targetEntity']
-                )
+                ),
+                '',
+                true,
+                $field['isOwningSide'] ?? false
             );
         } catch (\Exception $e) {
             return new PropertyMetadata(

@@ -16,50 +16,13 @@ use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 class MissingReferenceFixerDecorator implements NormalizerInterface, CacheableSupportsMethodInterface
 {
-    /**
-     * @var NormalizerInterface
-     */
-    protected $decoratedNormalizer;
-
-    /**
-     * @var PropertyNameCollectionFactoryInterface
-     */
-    protected $propertyNameCollectionFactory;
-
-    /**
-     * @var ResourceMetadataFactoryInterface
-     */
-    protected $resourceMetadataFactory;
-
-    /**
-     * @var PropertyMetadataFactoryInterface
-     */
-    protected $propertyMetadataFactory;
-
-    /**
-     * @var ResourceClassResolverInterface
-     */
-    protected $resourceClassResolver;
-
     public function __construct(
-        NormalizerInterface $decoratedNormalizer,
-        PropertyNameCollectionFactoryInterface $propertyNameCollectionFactory,
-        ResourceMetadataFactoryInterface $resourceMetadataFactory,
-        PropertyMetadataFactoryInterface $propertyMetadataFactory,
-        ResourceClassResolverInterface $resourceClassResolver
+        private NormalizerInterface $decoratedNormalizer,
+        private PropertyNameCollectionFactoryInterface $propertyNameCollectionFactory,
+        private ResourceMetadataFactoryInterface $resourceMetadataFactory,
+        private PropertyMetadataFactoryInterface $propertyMetadataFactory,
+        private ResourceClassResolverInterface $resourceClassResolver
     ) {
-        $this->resourceMetadataFactory = $resourceMetadataFactory;
-        $this->propertyNameCollectionFactory = $propertyNameCollectionFactory;
-        $this->propertyMetadataFactory = $propertyMetadataFactory;
-        $this->resourceClassResolver = $resourceClassResolver;
-
-        $reflection = new \ReflectionClass($decoratedNormalizer);
-        $property = $reflection->getProperty('propertyNameCollectionFactory');
-        $property->setAccessible(true);
-        $property->setValue($decoratedNormalizer, $propertyNameCollectionFactory);
-        $property->setAccessible(false);
-
-        $this->decoratedNormalizer = $decoratedNormalizer;
     }
 
     /**
@@ -115,6 +78,10 @@ class MissingReferenceFixerDecorator implements NormalizerInterface, CacheableSu
                     : $resourceShortName . '-' . $group;
 
                 if (in_array($definitionKey, $pendingDefinitions, true)) {
+                    continue;
+                }
+
+                if (isset($definitions[$definitionKey])) {
                     continue;
                 }
 
@@ -209,7 +176,7 @@ class MissingReferenceFixerDecorator implements NormalizerInterface, CacheableSu
             $propertyMetadata = $this->propertyMetadataFactory->create($resourceClass, $propertyName);
             $normalizedPropertyName = $propertyName;
 
-            if ($propertyMetadata->isRequired()) {
+            if ($propertyMetadata->isRequired() && !$propertyMetadata->isIdentifier()) {
                 $definitionSchema['required'][] = $normalizedPropertyName;
             }
 
@@ -234,7 +201,7 @@ class MissingReferenceFixerDecorator implements NormalizerInterface, CacheableSu
     {
         $propertySchema = new \ArrayObject($propertyMetadata->getAttributes()['swagger_context'] ?? []);
 
-        if (false === $propertyMetadata->isWritable()) {
+        if (false === $propertyMetadata->isWritable() || $propertyMetadata->isIdentifier()) {
             $propertySchema['readOnly'] = true;
         }
 

@@ -42,16 +42,18 @@ class PropertyMetadataOverwriteFactory implements PropertyMetadataFactoryInterfa
     {
         /** @var PropertyMetadata $propertyMetadata */
         $propertyMetadata = $this->decorated->create(...func_get_args());
+
         $attributes = $propertyMetadata->getAttribute('swagger_context', []);
         $propertyMetadata = $propertyMetadata->withDescription(
             $attributes['description'] ?? ''
         );
 
+        $propertyMetadata = $propertyMetadata->withReadable(true);
+        $propertyMetadata = $propertyMetadata->withReadableLink(true);
+
         $readOnly = $attributes['readOnly'] ?? false;
-        if ($readOnly) {
-            $propertyMetadata = $propertyMetadata->withWritable(false);
-            $propertyMetadata = $propertyMetadata->withWritableLink(false);
-        }
+        $propertyMetadata = $propertyMetadata->withWritable(! $readOnly);
+        $propertyMetadata = $propertyMetadata->withWritableLink(! $readOnly);
 
         $reflectionProperty = $this->getReflectionProperty($resourceClass, $property);
         if (!$reflectionProperty) {

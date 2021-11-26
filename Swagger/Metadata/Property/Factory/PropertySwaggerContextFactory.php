@@ -70,7 +70,7 @@ class PropertySwaggerContextFactory implements PropertyMetadataFactoryInterface
                 (isset($column['nullable']) && $column['nullable'])
                 || (
                     isset($column['onDelete'])
-                    && strtolower($column['onDelete'] === 'set null')
+                    && strtolower($column['onDelete']) === 'set null'
                 );
 
             $isRequiredFk =
@@ -78,6 +78,10 @@ class PropertySwaggerContextFactory implements PropertyMetadataFactoryInterface
                 || in_array($property, $swaggerRequiredFields, true);
 
             return $propertyMetadata->withRequired($isRequiredFk);
+        }
+
+        if (array_key_exists($property, $metadata->embeddedClasses)) {
+            return $propertyMetadata;
         }
 
         try {
