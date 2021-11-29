@@ -2,3 +2,5 @@ parameters:
     excludePaths:
         analyse:
             - vendor
+    ignoreErrors:
+        - '#Class Ivoz\\Provider\\Domain\\Model\\Administrator\\AdministratorRepository not found#'
