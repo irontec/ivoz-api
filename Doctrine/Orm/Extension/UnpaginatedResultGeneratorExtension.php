@@ -82,7 +82,7 @@ final class UnpaginatedResultGeneratorExtension implements ContextAwareQueryResu
         string $operationName = null,
         array $context = []
     ) {
-        ini_set('max_execution_time', 0);
+        ini_set('max_execution_time', '0');
 
         $connection =  $this
             ->entityManager

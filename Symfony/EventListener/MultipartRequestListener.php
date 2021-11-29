@@ -112,6 +112,7 @@ class MultipartRequestListener
             }
         }
 
+        /** @phpstan-ignore-next-line  files */
         $request->files = new FileBag($files);
         $request->request->add($data);
         $this->setRequestContent(

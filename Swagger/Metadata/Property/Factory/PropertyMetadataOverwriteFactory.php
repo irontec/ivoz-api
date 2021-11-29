@@ -67,7 +67,7 @@ class PropertyMetadataOverwriteFactory implements PropertyMetadataFactoryInterfa
             return $propertyMetadata;
         }
 
-        /** @var AttributeDefinition $annotation */
+        /** @var ?AttributeDefinition $annotation */
         $annotation = $this->reader->getPropertyAnnotation(
             $reflectionProperty,
             AttributeDefinition::class

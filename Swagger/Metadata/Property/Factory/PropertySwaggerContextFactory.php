@@ -85,6 +85,7 @@ class PropertySwaggerContextFactory implements PropertyMetadataFactoryInterface
         }
 
         try {
+            /** @psalm-var array<string, mixed> $fldMetadata */
             $fldMetadata = $metadata->getFieldMapping($property);
         } catch (\Exception $e) {
             return $propertyMetadata;

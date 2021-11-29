@@ -3,7 +3,6 @@
 namespace Ivoz\Api\Swagger\Metadata\Property;
 
 use ApiPlatform\Core\Api\IdentifiersExtractorInterface;
-use ApiPlatform\Core\Metadata\Property\Factory\PropertyNameCollectionFactoryInterface;
 use Ivoz\Core\Domain\Model\EntityInterface;
 
 class IdentifiersExtractor implements IdentifiersExtractorInterface
@@ -11,8 +10,7 @@ class IdentifiersExtractor implements IdentifiersExtractorInterface
     protected $decoratedIdentifiersExtractor;
 
     public function __construct(
-        IdentifiersExtractorInterface $decoratedIdentifiersExtractor,
-        PropertyNameCollectionFactoryInterface $propertyNameCollectionFactory
+        IdentifiersExtractorInterface $decoratedIdentifiersExtractor
     ) {
         $this->decoratedIdentifiersExtractor = $decoratedIdentifiersExtractor;
     }

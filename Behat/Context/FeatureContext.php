@@ -29,7 +29,7 @@ class FeatureContext extends RawMinkContext implements Context, SnippetAccepting
     protected $fs;
 
     /**
-     * @var Request
+     * @var Request | Request\BrowserKit
      */
     protected $request;
 
@@ -49,7 +49,7 @@ class FeatureContext extends RawMinkContext implements Context, SnippetAccepting
      * context constructor through behat.yml.
      */
     public function __construct(
-        private KernelInterface $kernel
+        KernelInterface $kernel
     ) {
         $this->cacheDir = $kernel->getCacheDir();
         $this->fs = new Filesystem();
@@ -126,7 +126,7 @@ class FeatureContext extends RawMinkContext implements Context, SnippetAccepting
 
         $this->assert(
             $expected == $actual,
-            $message ?: "The element '$actual' is not equal to '$expected'"
+            $message
         );
     }
 
@@ -199,7 +199,7 @@ class FeatureContext extends RawMinkContext implements Context, SnippetAccepting
     }
 
     /**
-     * @param $username
+     * @param string $username
      * @return string | null
      * @throws \Exception
      */

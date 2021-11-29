@@ -46,9 +46,9 @@ class PropertyNameCollectionFactory implements PropertyNameCollectionFactoryInte
             public function supportsNormalization($data, string $format = null) {
                 return true;
             }
-            public function normalize($object, string $format = null, array $context = []) {  }
-            public function serialize($data, string $format, array $context = []) {}
-            public function deserialize($data, string $type, string $format, array $context = []) {}
+            public function normalize($object, string $format = null, array $context = []) { return null; }
+            public function serialize($data, string $format, array $context = []) { return ''; }
+            public function deserialize($data, string $type, string $format, array $context = []) { return null; }
         };
     }
 

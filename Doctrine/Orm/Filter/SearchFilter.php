@@ -228,7 +228,7 @@ class SearchFilter extends BaseSearchFilter
     /**
      * @param ResourceMetadata $metadata
      * @param string $field
-     * @return bool|void
+     * @return ?bool
      */
     private function isDateTime(ResourceMetadata $metadata, string $field)
     {
@@ -237,7 +237,7 @@ class SearchFilter extends BaseSearchFilter
         );
 
         if (!array_key_exists(DateFilter::SERVICE_NAME, $filterFields)) {
-            return;
+            return null;
         }
         $dateFilterFields = $filterFields[DateFilter::SERVICE_NAME];
 

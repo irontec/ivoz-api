@@ -125,7 +125,7 @@ class SearchFilterDecorator implements NormalizerInterface, CacheableSupportsMet
 
     /**
      * @param string $name
-     * @return string | null
+     * @return string
      */
     private function cleanRef(string $name)
     {

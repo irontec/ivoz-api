@@ -182,7 +182,7 @@ class OperationMetadataFactory implements ResourceMetadataFactoryInterface
 
         return $this->setOperationTags(
             $resourceMetadata,
-            $tag ?? self::ENTITY_TAG
+            $tag
         );
     }
 

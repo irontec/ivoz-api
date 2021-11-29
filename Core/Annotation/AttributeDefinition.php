@@ -11,7 +11,7 @@ namespace Ivoz\Api\Core\Annotation;
 final class AttributeDefinition
 {
     /**
-     * @var string
+     * @var ?string
      */
     public $description;
 
@@ -20,15 +20,14 @@ final class AttributeDefinition
      */
     public $type;
 
-
     /**
      * Internal type of arrays
-     * @var string | null
+     * @var ?string
      */
     public $collectionValueType;
 
     /**
-     * @var string
+     * @var ?string
      */
     public $class;
 

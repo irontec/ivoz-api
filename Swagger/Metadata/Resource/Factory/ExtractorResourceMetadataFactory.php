@@ -24,12 +24,11 @@ class ExtractorResourceMetadataFactory implements ResourceMetadataFactoryInterfa
      */
     public function create(string $resourceClass): ResourceMetadata
     {
-        $parentResourceMetadata = null;
         if (!class_exists($resourceClass) || !$resource = $this->extractor->getResources()[$resourceClass] ?? false) {
-            return $this->handleNotFound($parentResourceMetadata, $resourceClass);
+            return $this->handleNotFound(null, $resourceClass);
         }
 
-        return $this->update($parentResourceMetadata ?: new ResourceMetadata(), $resource);
+        return $this->update(new ResourceMetadata(), $resource);
     }
 
     /**

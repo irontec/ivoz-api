@@ -22,12 +22,12 @@ class ExistsFilter extends BaseExistsFilter
 
     public function __construct(
         ManagerRegistry $managerRegistry,
+        ResourceMetadataFactoryInterface $resourceMetadataFactory,
         ?RequestStack $requestStack = null,
         LoggerInterface $logger = null,
         array $properties = null,
         string $existsParameterName = self::QUERY_PARAMETER_KEY,
-        NameConverterInterface $nameConverter = null,
-        ResourceMetadataFactoryInterface $resourceMetadataFactory
+        NameConverterInterface $nameConverter = null
     ) {
         $this->resourceMetadataFactory = $resourceMetadataFactory;
         parent::__construct(

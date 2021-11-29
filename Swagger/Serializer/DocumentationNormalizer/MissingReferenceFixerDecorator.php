@@ -161,7 +161,7 @@ class MissingReferenceFixerDecorator implements NormalizerInterface, CacheableSu
      */
     private function getDefinitionSchema(string $resourceClass, ResourceMetadata $resourceMetadata, \ArrayObject $definitions, array $serializerContext = null): \ArrayObject
     {
-        $definitionSchema = new \ArrayObject(['type' => 'object']);
+        $definitionSchema = ['type' => 'object'];
 
         if (null !== $description = $resourceMetadata->getDescription()) {
             $definitionSchema['description'] = $description;
@@ -174,16 +174,24 @@ class MissingReferenceFixerDecorator implements NormalizerInterface, CacheableSu
         $options = isset($serializerContext[AbstractNormalizer::GROUPS]) ? ['serializer_groups' => $serializerContext[AbstractNormalizer::GROUPS]] : [];
         foreach ($this->propertyNameCollectionFactory->create($resourceClass, $options) as $propertyName) {
             $propertyMetadata = $this->propertyMetadataFactory->create($resourceClass, $propertyName);
+            /** @var string $normalizedPropertyName */
             $normalizedPropertyName = $propertyName;
 
             if ($propertyMetadata->isRequired() && !$propertyMetadata->isIdentifier()) {
+                if (!isset($definitionSchema['required'])) {
+                    $definitionSchema['required'] = [];
+                }
+
                 $definitionSchema['required'][] = $normalizedPropertyName;
             }
 
+            if (!isset($definitionSchema['properties'])) {
+                $definitionSchema['properties'] = [];
+            }
             $definitionSchema['properties'][$normalizedPropertyName] = $this->getPropertySchema($propertyMetadata, $definitions, $serializerContext);
         }
 
-        return $definitionSchema;
+        return new \ArrayObject($definitionSchema);
     }
 
     /**
