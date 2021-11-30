@@ -99,7 +99,10 @@ class PropertyMetadataOverwriteFactory implements PropertyMetadataFactoryInterfa
         );
 
         $propertyMetadata = $propertyMetadata->withType($type);
-        $propertyMetadata = $propertyMetadata->withDescription($annotation->description ?? '');
+
+        /** @var ?string $description */
+        $description = $annotation->description;
+        $propertyMetadata = $propertyMetadata->withDescription($description ?? '');
         $propertyMetadata = $propertyMetadata->withRequired($annotation->required);
 
         return $propertyMetadata->withWritable($annotation->writable);
