@@ -28,6 +28,10 @@ class SearchFilterExact extends SearchFilter
             }
         }
 
+        if (empty($values)) {
+            return null;
+        }
+
         return array_values($values);
     }
 }
