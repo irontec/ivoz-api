@@ -2,6 +2,9 @@
 
 namespace Ivoz\Api\Swagger\Serializer\DocumentationNormalizer;
 
+use ApiPlatform\Core\Bridge\Doctrine\Common\Filter\ExistsFilterInterface;
+use ApiPlatform\Core\Bridge\Doctrine\Common\Filter\RangeFilterInterface;
+use ApiPlatform\Core\Bridge\Doctrine\Common\Filter\SearchFilterInterface;
 use Ivoz\Core\Domain\Model\EntityInterface;
 use Symfony\Component\PropertyInfo\Type;
 use Symfony\Component\Serializer\Normalizer\CacheableSupportsMethodInterface;
@@ -290,7 +293,58 @@ class SearchFilterDecorator implements NormalizerInterface, CacheableSupportsMet
                     return -1;
                 }
 
-                return strnatcmp($str1, $str2);
+                if ($isOrderAttribute1 || $isOrderAttribute2) {
+                    return strnatcmp($str1, $str2);
+                }
+
+                if (!str_contains($str1, '[') || !str_contains($str2, '[')) {
+                    return strnatcmp($str1, $str2);
+                }
+
+                $pattern = '/([^\[]+)\[(.*)\]/';
+                preg_match($pattern, $str1, $str1Segments);
+                preg_match($pattern, $str2, $str2Segments);
+
+                if (!$str1Segments || !$str2Segments) {
+                    return strnatcmp($str1, $str2);
+                }
+
+                if ($str1Segments[1] !== $str2Segments[1]) {
+                    return strnatcmp($str1, $str2);
+                }
+
+                $sortedFilters = [
+                    SearchFilterInterface::STRATEGY_EXACT,
+                    SearchFilterInterface::STRATEGY_START,
+                    SearchFilterInterface::STRATEGY_PARTIAL,
+                    SearchFilterInterface::STRATEGY_END,
+
+                    ExistsFilterInterface::QUERY_PARAMETER_KEY,
+
+                    RangeFilterInterface::PARAMETER_GREATER_THAN,
+                    RangeFilterInterface::PARAMETER_GREATER_THAN_OR_EQUAL,
+                    RangeFilterInterface::PARAMETER_LESS_THAN,
+                    RangeFilterInterface::PARAMETER_LESS_THAN_OR_EQUAL,
+
+                    RangeFilterInterface::PARAMETER_BETWEEN,
+                ];
+
+                $prio1 = array_search($str1Segments[2], $sortedFilters);
+                $prio2 = array_search($str2Segments[2], $sortedFilters);
+
+                if (false === $prio1 || false === $prio2) {
+                    return strnatcmp($str1, $str2);
+                }
+
+                if ($prio1 < $prio2) {
+                    return -1;
+                }
+
+                if ($prio1 > $prio2) {
+                    return 1;
+                }
+
+                return 0;
             }
         );
 
