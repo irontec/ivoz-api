@@ -230,6 +230,9 @@ class SearchFilterDecorator implements NormalizerInterface, CacheableSupportsMet
 
             if (array_key_exists('$ref', $values->getArrayCopy())) {
                 $responseModel = $this->getDefinitionByRef($values['$ref']);
+                if (!is_array($responseModel['properties'])) {
+                    continue;
+                }
                 $parameters = $this->appendPropertiesIntoParameters(
                     $parameters,
                     $responseModel['properties'],

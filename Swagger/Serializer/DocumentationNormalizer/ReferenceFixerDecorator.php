@@ -66,6 +66,12 @@ class ReferenceFixerDecorator implements NormalizerInterface, CacheableSupportsM
         foreach ($definitionKeys as $key) {
             if (!$this->isEntity($key)) {
                 if ($this->hasContext($key)) {
+                    $root = current(
+                        explode('-', $key)
+                    );
+                    if (!isset($definitions[$root])) {
+                        $definitions[$root] = $definitions[$key];
+                    }
                     unset($definitions[$key]);
                 }
                 continue;
@@ -77,7 +83,10 @@ class ReferenceFixerDecorator implements NormalizerInterface, CacheableSupportsM
 
             $context = explode('-', $key);
             foreach ($definitions[$key]['properties'] as $propertyKey => $property) {
-                $definitions[$key]['properties'][$propertyKey] = $this->fixRelationProperty($property, $context[1] ?? '');
+                $definitions[$key]['properties'][$propertyKey] = $this->fixRelationProperty(
+                    $property,
+                    $context[1] ?? '',
+                );
                 if (is_null($definitions[$key]['properties'][$propertyKey])) {
                     unset($definitions[$key]['properties'][$propertyKey]);
                 }
