@@ -8,7 +8,7 @@ use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter as BaseSearchFilter
 use ApiPlatform\Core\Bridge\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Core\Metadata\Resource\Factory\ResourceMetadataFactoryInterface;
 use ApiPlatform\Core\Metadata\Resource\ResourceMetadata;
-use Doctrine\DBAL\Types\Type;
+use Doctrine\DBAL\Types\Types as Type;
 use Doctrine\ORM\QueryBuilder;
 use Ivoz\Core\Domain\Model\Helper\DateTimeHelper;
 use Psr\Log\LoggerInterface;
@@ -129,7 +129,7 @@ class SearchFilter extends BaseSearchFilter
     protected function getType(string $doctrineType): string
     {
         switch ($doctrineType) {
-            case Type::TARRAY:
+            case Type::ARRAY:
                 return 'array';
             case Type::BIGINT:
             case Type::INTEGER:
@@ -137,10 +137,10 @@ class SearchFilter extends BaseSearchFilter
                 return 'int';
             case Type::BOOLEAN:
                 return 'bool';
-            case Type::DATE:
-            case Type::TIME:
-            case Type::DATETIME:
-            case Type::DATETIMETZ:
+            case Type::DATE_MUTABLE:
+            case Type::TIME_MUTABLE:
+            case Type::DATETIME_MUTABLE:
+            case Type::DATETIMETZ_MUTABLE:
                 return \DateTimeInterface::class;
             case Type::FLOAT:
                 return 'float';
