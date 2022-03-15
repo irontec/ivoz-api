@@ -212,7 +212,7 @@ class FilterMetadataFactory implements ResourceMetadataFactoryInterface
         }
 
         if (isset($metadata['id'])) {
-            return $metadata['id'];
+            return $metadata['id'] ?? null;
         }
 
         return false;
