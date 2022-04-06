@@ -98,8 +98,10 @@ class ReferenceFixerDecorator implements NormalizerInterface, CacheableSupportsM
 
     private function fixRelationProperty($property, $context = null)
     {
-        $isCollection = array_key_exists('items', $property->getArrayCopy());
-        $isReference = array_key_exists('$ref', $property->getArrayCopy());
+        $arrayProperty = $property->getArrayCopy();
+        $isCollection = array_key_exists('items', $arrayProperty);
+        $isReference = array_key_exists('$ref', $arrayProperty);
+        $isArrayReference = array_key_exists('items', $arrayProperty) && array_key_exists('$ref', $arrayProperty['items']);
 
         if (!($isCollection || $isReference)) {
             return $property;
@@ -107,6 +109,13 @@ class ReferenceFixerDecorator implements NormalizerInterface, CacheableSupportsM
 
         if ($isReference) {
             return $this->setContext($property, $context);
+        }
+
+        if ($isArrayReference) {
+            return $this->setContext(
+                $property,
+                DataTransferObjectInterface::CONTEXT_SIMPLE
+            );
         }
 
         $hasRefAttr = array_key_exists('$ref', $property['items']);
@@ -131,20 +140,27 @@ class ReferenceFixerDecorator implements NormalizerInterface, CacheableSupportsM
             DataTransferObjectInterface::CONTEXT_COLLECTION
         ];
 
-        if ($this->isEntity($property['$ref']) && in_array($context, $noSublevelContexts)) {
+        $isCollection = $property['type'] === 'array';
+        if ($this->isEntity($property['$ref']) && in_array($context, $noSublevelContexts) && !$isCollection) {
             unset($property['$ref']);
             $property['type'] = 'integer';
+
             return $property;
         }
 
-        $refSegments = explode('-', $property['$ref']);
-        $property['$ref'] = $refSegments[0];
+        if ($property['$ref']) {
+            $refSegments = explode('-', $property['$ref']);
+            $property['$ref'] = $refSegments[0];
+        } else if ($isCollection && $property['items']['$ref']) {
+            $refSegments = explode('-', $property['items']['$ref']);
+            $property['items']['$ref'] = $refSegments[0];
+        }
 
         $arrayProperty = is_array($property)
             ? $property
             : $property->getArrayCopy();
 
-        if (array_key_exists('description', $arrayProperty)) {
+        if (array_key_exists('description', $arrayProperty) && !$isCollection) {
             unset($property['description']);
         }
 
