@@ -137,10 +137,22 @@ class EntityNormalizer implements NormalizerInterface
             $propertyMap = $dtoClass::getPropertyMap($normalizationContext);
             $this->initializeRelationships($entity, array_values($propertyMap));
         }
+
+        $normalizationContext = $context['operation_normalization_context'] ?? null;
+        if (!$normalizationContext) {
+            $isPostOperation =
+                isset($context['collection_operation_name'])
+                && $context['collection_operation_name'] === 'post';
+
+            $normalizationContext = $isPostOperation
+                ? ''
+                : $context['operation_type'];
+        }
+
         $dto = $this->dtoAssembler->toDto(
             $entity,
             $depth,
-            $context['operation_normalization_context'] ?? null
+            $normalizationContext
         );
 
         return $this->normalizeDto(
@@ -171,11 +183,6 @@ class EntityNormalizer implements NormalizerInterface
         $depth = isset($context['item_operation_name'])
             ? $resourceMetadata->getItemOperationAttribute($context['item_operation_name'], 'depth', 1)
             : $resourceMetadata->getCollectionOperationAttribute($context['collection_operation_name'], 'depth', 0);
-
-        if ($depth > 0) {
-            $normalizationContext = $context['operation_normalization_context'] ?? $context['operation_type'] ?? '';
-            $propertyMap = $dto->getPropertyMap($normalizationContext);
-        }
 
         return $this->normalizeDto(
             $dto,
