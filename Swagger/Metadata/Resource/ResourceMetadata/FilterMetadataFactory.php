@@ -228,7 +228,8 @@ class FilterMetadataFactory implements ResourceMetadataFactoryInterface
         /** @var ClassMetadata $metadata */
         $metadata = $manager->getClassMetadata($resourceClass);
 
-        $items = $metadata->getMetadataValue('fieldMappings');
+        /** @var mixed[] $items */
+        $items = $metadata->getMetadataValue('fieldMappings') ?? [];
         $items += array_filter(
             $metadata->getMetadataValue('associationMappings'),
             function ($fld) {

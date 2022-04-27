@@ -55,8 +55,9 @@ class FeatureContext extends RawMinkContext implements Context, SnippetAccepting
         $this->fs = new Filesystem();
 
         $this->jwtTokenManager = $kernel->getContainer()->get('lexik_jwt_authentication.jwt_manager.public');
-        $this->administratorRepository = $kernel->getContainer()->get(
-            AdministratorRepository::class
+        $container = $kernel->getContainer();
+        $this->administratorRepository = $container->get(
+            $container->getParameter('behat.feature_context.admin_repository')
         );
     }
 

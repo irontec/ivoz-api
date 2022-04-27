@@ -3,4 +3,4 @@ parameters:
         analyse:
             - vendor
     ignoreErrors:
-        - '#Class Ivoz\\Provider\\Domain\\Model\\Administrator\\AdministratorRepository not found#'
+        - '#Parameter \#2 \$hydrationMode of method Doctrine\\ORM\\Query::iterate\(\) expects [0-9\|]+string\|null, 101 given#'

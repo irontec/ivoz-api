@@ -95,7 +95,22 @@ class EntityDenormalizer implements DenormalizerInterface
             ];
         }
 
-        $context['operation_type'] = $context['operation_normalization_context'] ?? DataTransferObjectInterface::CONTEXT_SIMPLE;
+        $normalizationContext = $context['operation_normalization_context'] ?? null;
+        if (!$normalizationContext) {
+
+            $isDetailedItem =
+                isset($context['item_operation_name'])
+                && $context['item_operation_name'] === 'get';
+
+            switch (true) {
+                case $isDetailedItem:
+                    $normalizationContext = DataTransferObjectInterface::CONTEXT_DETAILED;
+                    break;
+                default:
+                    $normalizationContext = DataTransferObjectInterface::CONTEXT_SIMPLE;;
+            }
+        }
+
         $entity = array_key_exists('object_to_populate', $context)
             ? $context['object_to_populate']
             : null;
@@ -104,7 +119,7 @@ class EntityDenormalizer implements DenormalizerInterface
             $data,
             $class,
             $entity,
-            $context['operation_type']
+            $normalizationContext
         );
     }
 
@@ -176,7 +191,7 @@ class EntityDenormalizer implements DenormalizerInterface
         );
 
         $dto = $entity
-            ? $this->dtoAssembler->toDto($entity)
+            ? $this->dtoAssembler->toDto(targetEntity: $entity, context: $normalizationContext)
             : $dto;
 
         $baseData = $dto->toArray();
