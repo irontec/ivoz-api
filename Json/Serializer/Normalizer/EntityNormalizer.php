@@ -144,9 +144,21 @@ class EntityNormalizer implements NormalizerInterface
                 isset($context['collection_operation_name'])
                 && $context['collection_operation_name'] === 'post';
 
-            $normalizationContext = $isPostOperation
-                ? ''
-                : $context['operation_type'];
+            $isDetailedItem =
+                isset($context['item_operation_name'])
+                && $context['item_operation_name'] === 'get'
+                && $depth > 0;
+
+            switch (true) {
+                case $isPostOperation:
+                    $normalizationContext = DataTransferObjectInterface::CONTEXT_EMPTY;
+                    break;
+                case $isDetailedItem:
+                    $normalizationContext = DataTransferObjectInterface::CONTEXT_DETAILED;
+                    break;
+                default:
+                    $normalizationContext = $context['operation_type'];
+            }
         }
 
         $dto = $this->dtoAssembler->toDto(
@@ -217,9 +229,21 @@ class EntityNormalizer implements NormalizerInterface
                 isset($context['collection_operation_name'])
                 && $context['collection_operation_name'] === 'post';
 
-            $normalizationContext = $isPostOperation
-                ? ''
-                : $context['operation_type'];
+            $isDetailedItem =
+                isset($context['item_operation_name'])
+                && $context['item_operation_name'] === 'get'
+                && $depth > 0;
+
+            switch (true) {
+                case $isPostOperation:
+                    $normalizationContext = DataTransferObjectInterface::CONTEXT_EMPTY;
+                    break;
+                case $isDetailedItem:
+                    $normalizationContext = DataTransferObjectInterface::CONTEXT_DETAILED;
+                    break;
+                default:
+                    $normalizationContext = $context['operation_type'] ?? DataTransferObjectInterface::CONTEXT_SIMPLE;
+            }
         }
         $forcedAttributes = $context['attributes'] ?? [];
 
