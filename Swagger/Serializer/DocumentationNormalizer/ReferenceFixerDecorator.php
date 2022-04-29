@@ -140,7 +140,7 @@ class ReferenceFixerDecorator implements NormalizerInterface, CacheableSupportsM
             DataTransferObjectInterface::CONTEXT_COLLECTION
         ];
 
-        $isCollection = $property['type'] === 'array';
+        $isCollection = ($property['type'] ?? null)  === 'array';
         if ($this->isEntity($property['$ref']) && in_array($context, $noSublevelContexts) && !$isCollection) {
             unset($property['$ref']);
             $property['type'] = 'integer';
