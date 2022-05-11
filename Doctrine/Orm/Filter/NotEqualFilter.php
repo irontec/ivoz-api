@@ -68,10 +68,13 @@ final class NotEqualFilter extends AbstractContextAwareFilter
             return;
         }
 
-        $parameterName = $queryNameGenerator->generateParameterName($property); // Generate a unique parameter name to avoid collisions with other filters
-        $queryBuilder
-            ->andWhere(sprintf('o.%s != :%s', $property, $parameterName))
-            ->setParameter($parameterName, $value);
+        foreach ($values as $val) {
+            $parameterName = $queryNameGenerator->generateParameterName($property); // Generate a unique parameter name to avoid collisions with other filters
+
+            $queryBuilder
+                ->andWhere(sprintf('o.%s != :%s', $property, $parameterName))
+                ->setParameter($parameterName, $val);
+        }
     }
 
     public function getDescription(string $resourceClass): array
@@ -107,6 +110,6 @@ final class NotEqualFilter extends AbstractContextAwareFilter
             }
         }
 
-        return array_values($values);
+        return array_values((array) $values[self::STRATEGY]);
     }
 }
