@@ -110,6 +110,10 @@ final class NotEqualFilter extends AbstractContextAwareFilter
             }
         }
 
-        return array_values((array) $values[self::STRATEGY]);
+        $response = array_key_exists(self::STRATEGY, $values)
+            ? $values[self::STRATEGY]
+            : [];
+
+        return array_values((array) $response);
     }
 }
