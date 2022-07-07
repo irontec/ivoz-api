@@ -66,7 +66,7 @@ final class WriteListener
             [
                 Request::METHOD_PUT,
                 Request::METHOD_POST,
-                Request::METHOD_DELETE
+                Request::METHOD_DELETE,
             ],
             true
         );
@@ -76,7 +76,8 @@ final class WriteListener
         }
 
         $this->validateAccessControlOrThrowException(
-            $controllerResult
+            $controllerResult,
+            $request->getMethod()
         );
 
         try {
@@ -110,10 +111,14 @@ final class WriteListener
      * @param EntityInterface $entity
      * @throws AccessDeniedException
      */
-    protected function validateAccessControlOrThrowException(EntityInterface $entity)
+    protected function validateAccessControlOrThrowException(EntityInterface $entity, string $method)
     {
+        $dataAccessControlMode = $method === Request::METHOD_DELETE
+            ? DataAccessControlParser::DELETE_ACCESS_CONTROL_ATTRIBUTE
+            : DataAccessControlParser::WRITE_ACCESS_CONTROL_ATTRIBUTE;
+
         $dataAccessControl = $this->dataAccessControlParser->get(
-            DataAccessControlParser::WRITE_ACCESS_CONTROL_ATTRIBUTE
+            $dataAccessControlMode
         );
         $accessControlExpression = DataAccessControlHelper::toString($dataAccessControl);
         if (!$accessControlExpression) {
