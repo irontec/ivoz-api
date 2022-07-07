@@ -27,10 +27,12 @@ class DataAccessControlParser
 
     const READ_ACCESS_CONTROL_ATTRIBUTE = 'read_access_control';
     const WRITE_ACCESS_CONTROL_ATTRIBUTE = 'write_access_control';
+    const DELETE_ACCESS_CONTROL_ATTRIBUTE = 'delete_access_control';
 
     const ACCESS_CONTROL_TYPES = [
         self::READ_ACCESS_CONTROL_ATTRIBUTE,
-        self::WRITE_ACCESS_CONTROL_ATTRIBUTE
+        self::WRITE_ACCESS_CONTROL_ATTRIBUTE,
+        self::DELETE_ACCESS_CONTROL_ATTRIBUTE,
     ];
 
     protected $requestStack;
@@ -105,6 +107,16 @@ class DataAccessControlParser
             $mode,
             []
         );
+
+        if (empty($response) && $mode === self::DELETE_ACCESS_CONTROL_ATTRIBUTE) {
+            /**
+             * Use write access control as fallback
+             */
+            $response = $resourceMetadata->getAttribute(
+                self::WRITE_ACCESS_CONTROL_ATTRIBUTE,
+                []
+            );
+        }
 
         if (empty($response) && $mode === self::WRITE_ACCESS_CONTROL_ATTRIBUTE) {
             /**
