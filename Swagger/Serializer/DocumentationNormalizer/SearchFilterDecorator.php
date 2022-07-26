@@ -296,6 +296,7 @@ class SearchFilterDecorator implements NormalizerInterface, CacheableSupportsMet
                     return -1;
                 }
 
+                /** @phpstan-ignore-next-line */
                 if ($isOrderAttribute1 || $isOrderAttribute2) {
                     return strnatcmp($str1, $str2);
                 }

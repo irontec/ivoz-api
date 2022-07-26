@@ -15,38 +15,37 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 final class WriteListener
 {
-    /**
-     * @var EntityPersisterInterface
-     */
-    private $entityPersister;
-
-    /**
-     * @var DataAccessControlParser
-     */
-    private $dataAccessControlParser;
-
-    /**
-     * @var DtoAssembler
-     */
-    private $dtoAssembler;
+    use ValidateAccessControlTrait;
 
     public function __construct(
-        EntityPersisterInterface $entityPersister,
+        private EntityPersisterInterface $entityPersister,
         DataAccessControlParser $dataAccessControlParser,
         DtoAssembler $dtoAssembler
     ) {
-        $this->entityPersister = $entityPersister;
         $this->dataAccessControlParser = $dataAccessControlParser;
         $this->dtoAssembler = $dtoAssembler;
     }
 
     /**
-     * Persists, updates or delete data return by the controller if applicable.
+     * Inserts or updates data returned by the controller if applicable.
      */
     public function onKernelView(ViewEvent $event)
     {
         $request = $event->getRequest();
         if ($request->isMethodSafe()) {
+            return;
+        }
+
+        $writeOperation = in_array(
+            $request->getMethod(),
+            [
+                Request::METHOD_PUT,
+                Request::METHOD_POST,
+            ],
+            true
+        );
+
+        if (!$writeOperation) {
             return;
         }
 
@@ -61,37 +60,12 @@ final class WriteListener
             return;
         }
 
-        $writeOperation = in_array(
-            $request->getMethod(),
-            [
-                Request::METHOD_PUT,
-                Request::METHOD_POST,
-                Request::METHOD_DELETE,
-            ],
-            true
-        );
-
-        if (!$writeOperation) {
-            return;
-        }
-
         $this->validateAccessControlOrThrowException(
             $controllerResult,
             $request->getMethod()
         );
 
         try {
-            $isDelete = $request->getMethod() === Request::METHOD_DELETE;
-            if ($isDelete) {
-                $this
-                    ->entityPersister
-                    ->remove($controllerResult);
-
-                $event
-                    ->setControllerResult(null);
-
-                return;
-            }
 
             $this->entityPersister->persist(
                 $controllerResult,
@@ -105,51 +79,5 @@ final class WriteListener
                 $e
             );
         }
-    }
-
-    /**
-     * @param EntityInterface $entity
-     * @throws AccessDeniedException
-     */
-    protected function validateAccessControlOrThrowException(EntityInterface $entity, string $method)
-    {
-        $dataAccessControlMode = $method === Request::METHOD_DELETE
-            ? DataAccessControlParser::DELETE_ACCESS_CONTROL_ATTRIBUTE
-            : DataAccessControlParser::WRITE_ACCESS_CONTROL_ATTRIBUTE;
-
-        $dataAccessControl = $this->dataAccessControlParser->get(
-            $dataAccessControlMode
-        );
-        $accessControlExpression = DataAccessControlHelper::toString($dataAccessControl);
-        if (!$accessControlExpression) {
-            return;
-        }
-
-        $data = $this->dtoAssembler
-            ->toDto($entity)
-            ->toArray();
-
-        $accessControlData = $this->flattenAccessControlData($data);
-        $expressionLanguage = new ExpressionLanguage();
-
-        $isValid = $expressionLanguage->evaluate(
-            $accessControlExpression,
-            $accessControlData
-        );
-
-        if (!$isValid) {
-            throw new AccessDeniedException('Rejected request during security check');
-        }
-    }
-
-    protected function flattenAccessControlData(array $data)
-    {
-        foreach ($data as $key => $value) {
-            if ($value instanceof DataTransferObjectInterface) {
-                $data[$key] = $value->getId();
-            }
-        }
-
-        return $data;
     }
 }
