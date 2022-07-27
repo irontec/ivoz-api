@@ -49,6 +49,10 @@ class CustomParameterDecorator implements NormalizerInterface, CacheableSupports
                     $path->getArrayCopy()
                 );
 
+                $pathArray = $this->setMultiDeleteParams(
+                    $pathArray
+                );
+
                 $pathArray = $this->fixPaginationParams(
                     $pathArray
                 );
@@ -100,6 +104,24 @@ class CustomParameterDecorator implements NormalizerInterface, CacheableSupports
 
         return $pathArray;
     }
+
+    private function setMultiDeleteParams(array $pathArray): array
+    {
+        $isDeleteOperation = array_key_exists(204, $pathArray['responses']);
+        if (!$isDeleteOperation) {
+            return $pathArray;
+        }
+
+        $pathArray['parameters'][] = [
+            'name' => '_rmAlso[]',
+            'in' => 'query',
+            'required' => false,
+            'type' => 'string',
+        ];
+
+        return $pathArray;
+    }
+
 
     private function fixPaginationParams(array $pathArray): array
     {
