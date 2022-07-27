@@ -59,6 +59,10 @@ final class RemoveListener
                 self::MULTIDELETE_QUERY_ARG
             );
 
+            if (is_null($rmAlso)) {
+                $rmAlso = [];
+            }
+
             if (!is_array($rmAlso)) {
                 throw new \RuntimeException(
                     self::MULTIDELETE_QUERY_ARG. ' query parameter was expected to be array value'
