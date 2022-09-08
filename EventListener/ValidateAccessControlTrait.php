@@ -46,6 +46,7 @@ trait ValidateAccessControlTrait
             ->toArray();
 
         $accessControlData = $this->flattenAccessControlData($data);
+        $accessControlData['this'] = $entity;
         $expressionLanguage = new ExpressionLanguage();
 
         $isValid = $expressionLanguage->evaluate(
