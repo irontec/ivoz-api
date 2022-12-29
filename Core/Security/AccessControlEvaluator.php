@@ -3,7 +3,7 @@
 namespace Ivoz\Api\Core\Security;
 
 use Doctrine\Common\Collections\Criteria;
-use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 
 class AccessControlEvaluator
@@ -12,7 +12,7 @@ class AccessControlEvaluator
     protected $expressionLanguage;
 
     public function __construct(
-        EntityManager $entityManager
+        EntityManagerInterface $entityManager
     ) {
         $this->em = $entityManager;
         $this->expressionLanguage = new ExpressionLanguage();
