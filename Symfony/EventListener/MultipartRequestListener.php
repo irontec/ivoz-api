@@ -57,8 +57,23 @@ class MultipartRequestListener
                 return;
             }
 
+            if (!isset($matches[1])) {
+                return;
+            }
+
+            if (empty($matches[1])) {
+                return;
+            }
+
             // Fetch and process each part
-            $parts = array_slice(explode($matches[1], $rawData), 1);
+            $parts = array_slice(
+                explode(
+                    $matches[1],
+                    $rawData
+                ),
+                1
+            );
+
             foreach ($parts as $part) {
                 // If this is the last part, break
                 if ($part === "--\r\n") {
