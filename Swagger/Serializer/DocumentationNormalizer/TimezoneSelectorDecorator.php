@@ -135,6 +135,10 @@ class TimezoneSelectorDecorator implements NormalizerInterface, CacheableSupport
             return null;
         }
 
+        if (!isset($successResponse['$ref']) && !isset($successResponse['items'])) {
+            return null;
+        }
+
         $ref = $successResponse['$ref'] ?? $successResponse['items']['$ref'];
 
         if (!$ref) {
