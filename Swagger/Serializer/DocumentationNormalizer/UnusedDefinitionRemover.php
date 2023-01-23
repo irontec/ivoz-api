@@ -78,6 +78,11 @@ class UnusedDefinitionRemover implements NormalizerInterface, CacheableSupportsM
                         continue;
                     }
                     $ref = $parameter['schema']['$ref'];
+
+                    if (is_null($ref)) {
+                        continue;
+                    }
+
                     if (!in_array($ref, $usedDefinitions)) {
                         $usedDefinitions[] = $this->cleanRef($ref);
                     }
