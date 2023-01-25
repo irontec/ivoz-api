@@ -87,12 +87,17 @@ class EntityDenormalizer implements DenormalizerInterface
                 $data[$name] = [];
             }
 
-            $data[$name] += [
-                'fileSize' => $file->getSize(),
-                'mimeType' => $file->getClientMimeType(),
-                'baseName' => $file->getClientOriginalName(),
-                'path' => $file->getPathname(),
-            ];
+            $data = array_merge(
+                $data,
+                [
+                    $name => [
+                        'fileSize' => $file->getSize(),
+                        'mimeType' => $file->getClientMimeType(),
+                        'baseName' => $file->getClientOriginalName(),
+                        'path' => $file->getPathname(),
+                    ]
+                ]
+            );
         }
 
         $normalizationContext = $context['operation_normalization_context'] ?? null;

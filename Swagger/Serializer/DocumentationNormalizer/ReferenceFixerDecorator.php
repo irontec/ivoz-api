@@ -48,9 +48,25 @@ class ReferenceFixerDecorator implements NormalizerInterface, CacheableSupportsM
         return $response;
     }
 
-    private function isEntity($resourceName)
+    private function isEntity($resourceName, \ArrayObject $definitions)
     {
-        return !strpos($resourceName, '_');
+        if (is_null($resourceName)) {
+            return false;
+        }
+
+        if (str_contains($resourceName, '_')) {
+            return false;
+        }
+
+        $definitionSegments = explode('/definitions/', $resourceName);
+        $definition = array_pop($definitionSegments);
+        $properties = $definitions[$definition]['properties'];
+
+        if (isset($properties['id'])) {
+            return true;
+        }
+
+        return false;
     }
 
     private function hasContext($definitionName)
@@ -64,7 +80,7 @@ class ReferenceFixerDecorator implements NormalizerInterface, CacheableSupportsM
     {
         $definitionKeys = array_keys($definitions->getArrayCopy());
         foreach ($definitionKeys as $key) {
-            if (!$this->isEntity($key)) {
+            if (!$this->isEntity($key, $definitions)) {
                 if ($this->hasContext($key)) {
                     $root = current(
                         explode('-', $key)
@@ -85,6 +101,7 @@ class ReferenceFixerDecorator implements NormalizerInterface, CacheableSupportsM
             foreach ($definitions[$key]['properties'] as $propertyKey => $property) {
                 $definitions[$key]['properties'][$propertyKey] = $this->fixRelationProperty(
                     $property,
+                    $definitions,
                     $context[1] ?? '',
                 );
                 if (is_null($definitions[$key]['properties'][$propertyKey])) {
@@ -96,7 +113,7 @@ class ReferenceFixerDecorator implements NormalizerInterface, CacheableSupportsM
         return $definitions;
     }
 
-    private function fixRelationProperty($property, $context = null)
+    private function fixRelationProperty($property, \ArrayObject $definitions, $context = null)
     {
         $arrayProperty = $property->getArrayCopy();
         $isCollection = array_key_exists('items', $arrayProperty);
@@ -108,13 +125,18 @@ class ReferenceFixerDecorator implements NormalizerInterface, CacheableSupportsM
         }
 
         if ($isReference) {
-            return $this->setContext($property, $context);
+            return $this->setContext(
+                $property,
+                $context,
+                $definitions
+            );
         }
 
         if ($isArrayReference) {
             return $this->setContext(
                 $property,
-                DataTransferObjectInterface::CONTEXT_SIMPLE
+                DataTransferObjectInterface::CONTEXT_SIMPLE,
+                $definitions
             );
         }
 
@@ -126,13 +148,17 @@ class ReferenceFixerDecorator implements NormalizerInterface, CacheableSupportsM
         }
 
         if ($hasRefAttr) {
-            $property['items'] = $this->setContext($property['items'], $context);
+            $property['items'] = $this->setContext(
+                $property['items'],
+                $context,
+                $definitions
+            );
         }
 
         return $property;
     }
 
-    private function setContext($property, $context)
+    private function setContext($property, $context, \ArrayObject $definitions)
     {
         $noSublevelContexts = [
             DataTransferObjectInterface::CONTEXT_EMPTY,
@@ -141,7 +167,7 @@ class ReferenceFixerDecorator implements NormalizerInterface, CacheableSupportsM
         ];
 
         $isCollection = ($property['type'] ?? null)  === 'array';
-        if ($this->isEntity($property['$ref']) && in_array($context, $noSublevelContexts) && !$isCollection) {
+        if ($this->isEntity($property['$ref'], $definitions) && in_array($context, $noSublevelContexts) && !$isCollection) {
             unset($property['$ref']);
             $property['type'] = 'integer';
 
