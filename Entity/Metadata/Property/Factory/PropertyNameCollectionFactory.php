@@ -93,11 +93,7 @@ class PropertyNameCollectionFactory implements PropertyNameCollectionFactoryInte
                         continue;
                     }
 
-                    foreach ($propertyMap[$value] as $key => $subAttribute) {
-
-                        if (is_array($subAttribute)) {
-                            continue;
-                        }
+                    foreach ($propertyMap[$value] as $subAttribute) {
                         $attributes[] = "$value.$subAttribute";
                     }
                     unset($attributes[$key]);

@@ -2,9 +2,9 @@
 
 namespace Ivoz\Api\EventListener;
 
-use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\Event\CommandWasExecuted;
-use Ivoz\Core\Application\RequestId;
+use Ivoz\Core\Domain\DataTransferObjectInterface;
+use Ivoz\Core\Domain\Event\CommandWasExecuted;
+use Ivoz\Core\Domain\RequestId;
 use Ivoz\Core\Domain\Model\EntityInterface;
 use Ivoz\Core\Domain\Service\DomainEventPublisher;
 use Symfony\Component\HttpFoundation\Request;

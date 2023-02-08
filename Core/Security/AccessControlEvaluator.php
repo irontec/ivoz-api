@@ -8,13 +8,11 @@ use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 
 class AccessControlEvaluator
 {
-    protected $em;
     protected $expressionLanguage;
 
     public function __construct(
-        EntityManagerInterface $entityManager
+        private EntityManagerInterface $em
     ) {
-        $this->em = $entityManager;
         $this->expressionLanguage = new ExpressionLanguage();
     }
 
