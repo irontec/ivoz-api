@@ -4,8 +4,8 @@ namespace Ivoz\Api\EventListener;
 
 use Ivoz\Api\Core\Security\DataAccessControlHelper;
 use Ivoz\Api\Core\Security\DataAccessControlParser;
-use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\Service\Assembler\DtoAssembler;
+use Ivoz\Core\Domain\DataTransferObjectInterface;
+use Ivoz\Core\Domain\Service\Assembler\DtoAssembler;
 use Ivoz\Core\Domain\Model\EntityInterface;
 use Symfony\Component\DependencyInjection\ExpressionLanguage;
 use Symfony\Component\HttpFoundation\Request;

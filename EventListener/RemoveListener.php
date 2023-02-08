@@ -4,7 +4,7 @@ namespace Ivoz\Api\EventListener;
 
 use Doctrine\Persistence\ManagerRegistry;
 use Ivoz\Api\Core\Security\DataAccessControlParser;
-use Ivoz\Core\Application\Service\Assembler\DtoAssembler;
+use Ivoz\Core\Domain\Service\Assembler\DtoAssembler;
 use Ivoz\Core\Domain\Model\EntityInterface;
 use Ivoz\Core\Domain\Service\EntityPersisterInterface;
 use Symfony\Component\HttpFoundation\Request;
