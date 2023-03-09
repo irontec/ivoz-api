@@ -3,7 +3,6 @@
 namespace Ivoz\Api\Doctrine\Orm\Filter;
 
 use ApiPlatform\Core\Bridge\Doctrine\Orm\Util\QueryNameGeneratorInterface;
-use ApiPlatform\Core\Exception\InvalidArgumentException;
 use Doctrine\ORM\QueryBuilder;
 
 /**
@@ -39,11 +38,26 @@ class SearchFilterExact extends SearchFilter
         return array_values($values);
     }
 
-    protected function addWhereByStrategy(string $strategy, QueryBuilder $queryBuilder, QueryNameGeneratorInterface $queryNameGenerator, string $alias, string $field, $values, bool $caseSensitive)
-    {
+    protected function addWhereByStrategy(
+        string $strategy,
+        QueryBuilder $queryBuilder,
+        QueryNameGeneratorInterface $queryNameGenerator,
+        string $alias,
+        string $field,
+        $values,
+        bool $caseSensitive
+    ) {
         $multipleValues = is_array($values) && is_array($values[0]);
         if (! $multipleValues) {
-            return parent::addWhereByStrategy($strategy, $queryBuilder, $queryNameGenerator, $alias, $field, $values, $caseSensitive);
+            return parent::addWhereByStrategy(
+                $strategy,
+                $queryBuilder,
+                $queryNameGenerator,
+                $alias,
+                $field,
+                $values,
+                $caseSensitive
+            );
         }
 
         $wrapCase = $this->createWrapCase($caseSensitive);
