@@ -102,7 +102,7 @@ class SearchFilterDecorator implements NormalizerInterface, CacheableSupportsMet
                 $responseDefinitionName
             );
 
-            if (!isset($responseModel['properties']) || is_null($responseModel['properties'])) {
+            if (!isset($responseModel['properties'])) {
                 continue;
             }
 
@@ -256,7 +256,6 @@ class SearchFilterDecorator implements NormalizerInterface, CacheableSupportsMet
 
             $skip =
                 !isset($values['type'])
-                || is_null($values['type'])
                 || $values['type'] === Type::BUILTIN_TYPE_ARRAY;
 
             if ($skip) {
