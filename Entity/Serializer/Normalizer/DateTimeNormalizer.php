@@ -66,6 +66,11 @@ class DateTimeNormalizer implements DateTimeNormalizerInterface
         $utcTimeZone = new \DateTimeZone('UTC');
 
         if ($hasTimeZone) {
+
+            if (strtoupper($value) === 'CURRENT_TIMESTAMP') {
+                $value = null;
+            }
+
             $value = new \DateTime(
                 $value,
                 $this->requestDateTimeResolver->getTimezone()
