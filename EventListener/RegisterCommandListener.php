@@ -93,8 +93,10 @@ final class RegisterCommandListener
             return;
         }
 
+        $ip = $_SERVER['X-Forwarded-For'] ?? $_SERVER['REMOTE_ADDR'] ?? '';
+
         $agent = [
-            'ip' => $_SERVER['REMOTE_ADDR'] ?? '',
+            'ip' => $ip,
             'user' => (string) $user,
         ];
 
