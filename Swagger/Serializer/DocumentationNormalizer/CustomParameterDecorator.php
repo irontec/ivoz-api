@@ -135,6 +135,14 @@ class CustomParameterDecorator implements NormalizerInterface, CacheableSupports
     private function fixAutoinjectedBodyParam(array $pathArray, string $reqPath): array
     {
         $parameters = $pathArray['parameters'] ?? [];
+        foreach ($parameters as $key => $val) {
+            if (isset($val['name'])) {
+                continue;
+            }
+
+            unset($parameters[$key]);
+        }
+
         if (empty($parameters)) {
             return $pathArray;
         }
