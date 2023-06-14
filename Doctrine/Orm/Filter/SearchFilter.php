@@ -26,6 +26,7 @@ class SearchFilter extends BaseSearchFilter
 
     use FilterTrait;
 
+    protected $resourceMetadataFactory;
     protected $requestStack;
 
     public function __construct(

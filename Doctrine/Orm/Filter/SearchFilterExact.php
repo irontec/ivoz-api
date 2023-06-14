@@ -2,8 +2,17 @@
 
 namespace Ivoz\Api\Doctrine\Orm\Filter;
 
+use ApiPlatform\Core\Api\IdentifiersExtractorInterface;
+use ApiPlatform\Core\Api\IriConverterInterface;
 use ApiPlatform\Core\Bridge\Doctrine\Orm\Util\QueryNameGeneratorInterface;
+use ApiPlatform\Core\Metadata\Resource\Factory\ResourceMetadataFactoryInterface;
 use Doctrine\ORM\QueryBuilder;
+use Ivoz\Core\Domain\Model\Helper\DateTimeHelper;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
+use Symfony\Component\Serializer\NameConverter\NameConverterInterface;
+use ApiPlatform\Core\Metadata\Property\Factory\PropertyMetadataFactoryInterface;
 
 /**
  * @inheritdoc
@@ -11,6 +20,33 @@ use Doctrine\ORM\QueryBuilder;
 class SearchFilterExact extends SearchFilter
 {
     const SERVICE_NAME = 'ivoz.api.filter.search_exact';
+
+    private string $resourceClass;
+
+    public function __construct(
+        \Symfony\Bridge\Doctrine\ManagerRegistry $managerRegistry,
+        ?RequestStack $requestStack = null,
+        IriConverterInterface $iriConverter,
+        PropertyAccessorInterface $propertyAccessor = null,
+        LoggerInterface $logger = null,
+        array $properties = null,
+        IdentifiersExtractorInterface $identifiersExtractor = null,
+        NameConverterInterface $nameConverter = null,
+        ResourceMetadataFactoryInterface $resourceMetadataFactory,
+        private PropertyMetadataFactoryInterface $propertyMetadataFactory
+    ) {
+        parent::__construct(
+            $managerRegistry,
+            $requestStack,
+            $iriConverter,
+            $propertyAccessor,
+            $logger,
+            $properties,
+            $identifiersExtractor,
+            $nameConverter,
+            $resourceMetadataFactory
+        );
+    }
 
     /**
      * {@inheritdoc}
@@ -21,13 +57,43 @@ class SearchFilterExact extends SearchFilter
     }
 
     /**
+     * {@inheritdoc}
+     */
+    protected function filterProperty(
+        string $property,
+        $value, QueryBuilder $queryBuilder,
+        QueryNameGeneratorInterface $queryNameGenerator,
+        string $resourceClass,
+        string $operationName = null
+    ) {
+        $this->resourceClass = $resourceClass;
+        return parent::filterProperty(...func_get_args());
+    }
+
+    /**
      * @inherit
      */
     protected function normalizeValues(array $values, string $property): ?array
     {
+        $metadata = $this->propertyMetadataFactory->create($this->resourceClass, $property);
+        $propertyClassName = $metadata->getType()->getClassName();
         foreach ($values as $key => $value) {
             if ($key !== self::STRATEGY_EXACT && !is_numeric($key)) {
                 unset($values[$key]);
+            }
+
+            preg_match(
+                '/^\d{4}\-\d{2}\-\d{2} \d{2}:\d{2}:\d{2}$/',
+                $value,
+                $matches
+            );
+            $isDateTime = count($matches) > 0 && $isDateTime = $propertyClassName === 'DateTime';;
+            if ($isDateTime) {
+                $values[$key] = DateTimeHelper::stringToUtc(
+                    $value,
+                    'Y-m-d H:i:s',
+                    $this->getTimezone()
+                );
             }
         }
 
@@ -67,5 +133,18 @@ class SearchFilterExact extends SearchFilter
         $queryBuilder
             ->andWhere($queryBuilder->expr()->in($wrapCase($aliasedField), $valueParameter))
             ->setParameter($valueParameter, $caseSensitive ? $values[0] : array_map('strtolower', $values[0]));
+    }
+
+
+    private function getTimezone()
+    {
+        $request = $this->requestStack->getCurrentRequest();
+
+        $timezone = $request->query->get('_timezone', null);
+        if (!$timezone) {
+            return new \DateTimeZone('UTC');
+        }
+
+        return new \DateTimeZone($timezone);
     }
 }

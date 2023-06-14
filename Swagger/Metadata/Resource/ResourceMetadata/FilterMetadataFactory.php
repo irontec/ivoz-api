@@ -148,6 +148,7 @@ class FilterMetadataFactory implements ResourceMetadataFactoryInterface
                 case 'datetime':
                 case 'datetimetz':
                 case 'time':
+                    $filters[SearchFilterExact::SERVICE_NAME][$attribute] = SearchFilter::STRATEGY_EXACT;
                     $filters[SearchFilter::SERVICE_NAME][$attribute] = SearchFilter::STRATEGY_START;
                     $filters[DateFilter::SERVICE_NAME][$attribute] = null;
                     $filters[NotEqualFilter::SERVICE_NAME][$attribute] = null;
