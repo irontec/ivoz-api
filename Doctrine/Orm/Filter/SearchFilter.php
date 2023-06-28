@@ -24,6 +24,14 @@ class SearchFilter extends BaseSearchFilter
 {
     const SERVICE_NAME = 'ivoz.api.filter.search';
 
+    const VALID_FILTERS = [
+        self::STRATEGY_EXACT,
+        self::STRATEGY_PARTIAL,
+        self::STRATEGY_START,
+        self::STRATEGY_END,
+        self::STRATEGY_WORD_START,
+    ];
+
     use FilterTrait;
 
     protected $resourceMetadataFactory;
@@ -172,14 +180,47 @@ class SearchFilter extends BaseSearchFilter
         array $context = []
     ) {
         $metadata = $this->resourceMetadataFactory->create($resourceClass);
-        $this->overrideProperties($metadata->getAttributes());
+        if (!$this->properties) {
+            $this->overrideProperties($metadata->getAttributes());
+        }
 
-        $context['filters'] = $this->dateFiltersToUtc(
-            $metadata,
-            $context['filters']
-        );
+        $contextCopy = (new \ArrayObject($context))->getArrayCopy();
+        $contextFilters = $contextCopy['filters'];
+        foreach ($contextFilters as $field => $filters) {
 
-        return parent::apply($queryBuilder, $queryNameGenerator, $resourceClass, $operationName, $context);
+            if (strpos($field, '_') === 0) {
+                continue;
+            }
+
+            if (!is_array($filters)) {
+                unset($contextFilters[$field]);
+                continue;
+            }
+
+            foreach ($filters as $filter => $value) {
+                if (!in_array($filter, self::VALID_FILTERS)) {
+                    unset($contextFilters[$field][$filter]);
+                }
+            }
+
+            if (empty($contextFilters[$field])) {
+                unset($contextFilters[$field]);
+            }
+        }
+
+        if (get_class($this) === SearchFilter::class) {
+            $contextCopy['filters'] = $this->dateFiltersToUtc(
+                $metadata,
+                $contextFilters
+            );
+        }
+
+        $contextCopy['filters'] = $contextFilters;
+        if (empty($contextCopy['filters'])) {
+            return;
+        }
+
+        return parent::apply($queryBuilder, $queryNameGenerator, $resourceClass, $operationName, $contextCopy);
     }
 
     /**
@@ -188,7 +229,7 @@ class SearchFilter extends BaseSearchFilter
     protected function normalizeValues(array $values, string $property): ?array
     {
         foreach ($values as $key => $value) {
-            if (!is_numeric($key) && $key !== self::STRATEGY_PARTIAL) {
+            if (!is_numeric($key) && !in_array($key, self::VALID_FILTERS)) {
                 unset($values[$key]);
             }
         }
@@ -203,7 +244,12 @@ class SearchFilter extends BaseSearchFilter
                 continue;
             }
 
-            if (!is_scalar($criteria)) {
+            if (is_array($criteria)) {
+
+                foreach ($criteria as $filter => $value) {
+                    $filters[$field][$filter] = $this->stringToUtc($value);
+                }
+
                 continue;
             }
 

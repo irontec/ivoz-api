@@ -149,7 +149,7 @@ class FilterMetadataFactory implements ResourceMetadataFactoryInterface
                 case 'datetimetz':
                 case 'time':
                     $filters[SearchFilterExact::SERVICE_NAME][$attribute] = SearchFilter::STRATEGY_EXACT;
-                    $filters[SearchFilter::SERVICE_NAME][$attribute] = SearchFilter::STRATEGY_START;
+                    $filters[SearchFilterStart::SERVICE_NAME][$attribute] = SearchFilter::STRATEGY_START;
                     $filters[DateFilter::SERVICE_NAME][$attribute] = null;
                     $filters[NotEqualFilter::SERVICE_NAME][$attribute] = null;
                     $isNullable = $this->isNullableField($resourceClass, $attribute);

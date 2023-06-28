@@ -56,6 +56,49 @@ class SearchFilterExact extends SearchFilter
         return parent::getDescription($resourceClass, $addDefault);
     }
 
+    public function apply(QueryBuilder $queryBuilder, QueryNameGeneratorInterface $queryNameGenerator, string $resourceClass, string $operationName = null, array $context = [])
+    {
+        $contextCopy = (new \ArrayObject($context))->getArrayCopy();
+        foreach ($contextCopy['filters'] as $field => $filters) {
+
+            if (strpos($field, '_') === 0) {
+                continue;
+            }
+
+            $metadata = $this->propertyMetadataFactory->create($resourceClass, $field);
+            $fieldClassName = $metadata->getType()?->getClassName();
+            if (!is_array($filters)) {
+
+                $strategy = self::STRATEGY_EXACT;
+                if ($fieldClassName === 'DateTime') {
+                    $strategy = self::STRATEGY_START;
+                    $this->properties[$field] = $strategy;
+                }
+
+                $contextCopy['filters'][$field] = [$strategy => $filters];
+            } else {
+                foreach ($contextCopy['filters'] as $filter => $value) {
+
+                    if (strpos($filter, '_') === 0) {
+                        continue;
+                    }
+
+                    if ($filter !== self::STRATEGY_EXACT) {
+                        unset($contextCopy['filters'][$filter]);
+                    }
+                }
+            }
+        }
+
+        return parent::apply(
+            $queryBuilder,
+            $queryNameGenerator,
+            $resourceClass,
+            $operationName,
+            $contextCopy
+        );
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -78,7 +121,7 @@ class SearchFilterExact extends SearchFilter
         $metadata = $this->propertyMetadataFactory->create($this->resourceClass, $property);
         $propertyClassName = $metadata->getType()->getClassName();
         foreach ($values as $key => $value) {
-            if ($key !== self::STRATEGY_EXACT && !is_numeric($key)) {
+            if ($key !== self::STRATEGY_EXACT && !is_numeric($key) && $propertyClassName !== 'DateTime') {
                 unset($values[$key]);
             }
 
