@@ -198,6 +198,16 @@ class SearchFilter extends BaseSearchFilter
             }
 
             foreach ($filters as $filter => $value) {
+
+                $isInArrayFilter =
+                    is_numeric($filter)
+                    && array_key_exists($field, $this->properties)
+                    && $this->properties[$field] === self::STRATEGY_EXACT;
+
+                if ($isInArrayFilter) {
+                    continue;
+                }
+
                 if (!in_array($filter, self::VALID_FILTERS)) {
                     unset($contextFilters[$field][$filter]);
                 }
