@@ -77,13 +77,34 @@ class DateFilter extends BaseDateFilter
      */
     protected function addWhere(QueryBuilder $queryBuilder, QueryNameGeneratorInterface $queryNameGenerator, string $alias, string $field, string $operator, $value, string $nullManagement = null, $type = null)
     {
-        $value = DateTimeHelper::stringToUtc(
-            $value,
-            'Y-m-d H:i:s',
-            $this->getTimezone()
-        );
+        if (is_array($value)) {
+            foreach ($value as $key => $val) {
+                $utcValue = DateTimeHelper::stringToUtc(
+                    $val,
+                    'Y-m-d H:i:s',
+                    $this->getTimezone()
+                );
 
-        parent::addWhere(...func_get_args());
+                parent::addWhere(
+                    $queryBuilder,
+                    $queryNameGenerator,
+                    $alias,
+                    $field,
+                    $operator,
+                    $utcValue,
+                    $nullManagement,
+                    $type
+                );
+            }
+        } else {
+            $value = DateTimeHelper::stringToUtc(
+                $value,
+                'Y-m-d H:i:s',
+                $this->getTimezone()
+            );
+
+            parent::addWhere(...func_get_args());
+        }
     }
 
     private function getTimezone()

@@ -68,6 +68,10 @@ class SearchFilterStart extends SearchFilter
             }
         }
 
+        if (is_array($values[self::STRATEGY_START])) {
+            return array_values($values[self::STRATEGY_START]);
+        }
+
         return array_values($values);
     }
 }
