@@ -193,7 +193,6 @@ class SearchFilter extends BaseSearchFilter
             }
 
             if (!is_array($filters)) {
-                unset($contextFilters[$field]);
                 continue;
             }
 
