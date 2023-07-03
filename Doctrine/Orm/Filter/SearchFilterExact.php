@@ -83,8 +83,15 @@ class SearchFilterExact extends SearchFilter
                         continue;
                     }
 
-                    if ($filter !== self::STRATEGY_EXACT) {
-                        unset($contextCopy['filters'][$filter]);
+                    if (!is_array($value)) {
+                        if ($filter !== self::STRATEGY_EXACT) {
+                            unset($contextCopy['filters'][$filter]);
+                        }
+                    } else {
+                        $valueKey = key($value);
+                        if ($valueKey !== self::STRATEGY_EXACT) {
+                            unset($contextCopy['filters'][$filter]);
+                        }
                     }
                 }
             }
@@ -125,12 +132,21 @@ class SearchFilterExact extends SearchFilter
                 unset($values[$key]);
             }
 
+            if (is_array($value)) {
+                $values[$key] = $this->normalizeValues(
+                    $value,
+                    $property
+                );
+
+                continue;
+            }
+
             preg_match(
                 '/^\d{4}\-\d{2}\-\d{2} \d{2}:\d{2}:\d{2}$/',
                 $value,
                 $matches
             );
-            $isDateTime = count($matches) > 0 && $isDateTime = $propertyClassName === 'DateTime';;
+            $isDateTime = count($matches) > 0 && $propertyClassName === 'DateTime';
             if ($isDateTime) {
                 $values[$key] = DateTimeHelper::stringToUtc(
                     $value,

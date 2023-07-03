@@ -28,6 +28,10 @@ class SearchFilterEnd extends SearchFilter
             }
         }
 
+        if (is_array($values[self::STRATEGY_END])) {
+            return array_values($values[self::STRATEGY_END]);
+        }
+
         return array_values($values);
     }
 }

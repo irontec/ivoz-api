@@ -208,6 +208,15 @@ class SearchFilter extends BaseSearchFilter
                     continue;
                 }
 
+                $filterMissmatch =
+                    !array_key_exists($field, $this->properties)
+                    || $this->properties[$field] !== $filter;
+
+                if ($filterMissmatch) {
+                    unset($contextFilters[$field][$filter]);
+                    continue;
+                }
+
                 if (!in_array($filter, self::VALID_FILTERS)) {
                     unset($contextFilters[$field][$filter]);
                 }
@@ -242,6 +251,11 @@ class SearchFilter extends BaseSearchFilter
             if (!is_numeric($key) && !in_array($key, self::VALID_FILTERS)) {
                 unset($values[$key]);
             }
+        }
+
+        $strategy = $this->properties[$property] ?? self::STRATEGY_EXACT;
+        if (array_key_exists($strategy, $values) && is_array($values[$strategy])) {
+            return array_values($values[$strategy]);
         }
 
         return array_values($values);
