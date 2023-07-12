@@ -31,7 +31,11 @@ class PropertyMetadataLinkFactory implements PropertyMetadataFactoryInterface
             return $propertyMetadata;
         }
 
-        $isEntity = in_array(EntityInterface::class, class_implements($typeClass));
+        $interfaces = class_implements($typeClass);
+        $isEntity =
+            is_array($interfaces)
+            && in_array(EntityInterface::class, class_implements($typeClass));
+
         $isCollection = $type->isCollection();
         if ($isEntity || $isCollection) {
             $propertyMetadata = $propertyMetadata->withReadable(true);
