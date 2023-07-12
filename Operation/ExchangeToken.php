@@ -71,7 +71,7 @@ class ExchangeToken
             throw new \RuntimeException('Unable to find user ' . $username, 404);
         }
 
-        $payloadModifier = function (JWTCreatedEvent $event) use ($parentAdminTokenPayload) {
+        $payloadModifier = function (JWTCreatedEvent $event) use ($targetAdmin, $parentAdminTokenPayload) {
 
             $exp = new \DateTime(
                 '+' . $this->ttl,
@@ -91,8 +91,9 @@ class ExchangeToken
             if (isset($parentAdminTokenPayload['onBehalfOf'])) {
                 $tokenChain[] = $parentAdminTokenPayload['onBehalfOf'];
             }
-            $tokenChain[] = $parentAdminTokenPayload['username'];
-            $payload['onBehalfOf'] = implode(',', $tokenChain);
+            $tokenChain[] = $parentAdminTokenPayload['iden'];
+            $payload['onBehalfOf'] = implode(' > ', $tokenChain);
+            $payload['iden'] = (string) $targetAdmin;
 
             $event->setData($payload);
         };
