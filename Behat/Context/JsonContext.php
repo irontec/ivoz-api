@@ -5,6 +5,7 @@ namespace Ivoz\Api\Behat\Context;
 use Behat\Behat\Context\Context;
 use Behat\Behat\Context\SnippetAcceptingContext;
 use Behat\Gherkin\Node\PyStringNode;
+use Behat\Mink\Exception\ExpectationException;
 use Behatch\Context\BaseContext;
 use Behatch\HttpCall\HttpCallResultPool;
 use Behatch\HttpCall\Request;
@@ -123,7 +124,7 @@ class JsonContext extends BaseContext implements Context, SnippetAcceptingContex
         } catch (\Exception $e) {
             $this->assert(
                 false,
-                "The json is equal to:\n". $actual->encode()
+                "The json is equal to:\n". $actual->encode() . "\nbut\n" . $e->getMessage()
             );
         }
     }
@@ -208,11 +209,26 @@ class JsonContext extends BaseContext implements Context, SnippetAcceptingContex
     {
         switch($matcher) {
             case 'type':
+
+                $actualType = gettype($actual);
                 $castedExpectedVariable = $expected;
-                settype($castedExpectedVariable, gettype($actual));
+
+                if ($actualType !== gettype($castedExpectedVariable)) {
+                    $succeeded = settype(
+                        $castedExpectedVariable,
+                        $actualType
+                    );
+
+                    if (!$succeeded) {
+                        throw new ExpectationException(
+                            'Unable to cast ' . $expected . ' to ' . $actualType,
+                            $this->getSession()->getDriver()
+                        );
+                    }
+                }
 
                 $this->assert(
-                    $castedExpectedVariable === $actual,
+                    gettype($castedExpectedVariable) === gettype($actual),
                     "Type of element '$actual' is not equal to '$expected'"
                 );
                 break;
