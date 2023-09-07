@@ -90,7 +90,15 @@ class SearchFilterExact extends SearchFilter
                     } else {
                         $valueKey = key($value);
                         if ($valueKey !== self::STRATEGY_EXACT) {
-                            unset($contextCopy['filters'][$filter]);
+                            if (is_numeric($valueKey)) {
+                                if ($fieldClassName === 'DateTime') {
+                                    $strategy = self::STRATEGY_START;
+                                    $this->properties[$field] = $strategy;
+                                    $contextCopy['filters'][$field] = [$strategy => $filters];
+                                }
+                            } else {
+                                unset($contextCopy['filters'][$filter]);
+                            }
                         }
                     }
                 }
