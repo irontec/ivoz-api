@@ -170,6 +170,10 @@ class JsonContext extends BaseContext implements Context, SnippetAcceptingContex
                     );
                 }
 
+                if($value === "~"){
+                    continue;
+                }
+
                 $this->assertAlike($expected[$key], $actual[$key]);
             }
 
