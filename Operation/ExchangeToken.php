@@ -2,6 +2,7 @@
 
 namespace Ivoz\Api\Operation;
 
+use ApiPlatform\Core\EventListener\EventPriorities;
 use ApiPlatform\Core\Exception\ResourceClassNotFoundException;
 use Lexik\Bundle\JWTAuthenticationBundle\Event\JWTCreatedEvent;
 use Lexik\Bundle\JWTAuthenticationBundle\Events;
@@ -92,6 +93,12 @@ class ExchangeToken
                 $tokenChain[] = $parentAdminTokenPayload['onBehalfOf'];
             }
             $tokenChain[] = $parentAdminTokenPayload['iden'];
+
+            if (isset($parentAdminTokenPayload['onBehalfOfIds'])) {
+                $payload['onBehalfOfIds'] = $parentAdminTokenPayload['onBehalfOfIds'];
+            }
+            $payload['onBehalfOfIds'][] = $targetAdmin->getId();
+
             $payload['onBehalfOf'] = implode(' > ', $tokenChain);
             $payload['iden'] = (string) $targetAdmin;
 
@@ -100,7 +107,8 @@ class ExchangeToken
 
         $this->eventDispatcher->addListener(
             Events::JWT_CREATED,
-            $payloadModifier
+            $payloadModifier,
+            EventPriorities::PRE_VALIDATE
         );
 
         $newToken = $this->jwtTokenManager->create($targetAdmin);
