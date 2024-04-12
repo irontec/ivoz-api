@@ -93,13 +93,14 @@ class ExchangeToken
                 $tokenChain[] = $parentAdminTokenPayload['onBehalfOf'];
             }
             $tokenChain[] = $parentAdminTokenPayload['iden'];
+            $payload['onBehalfOf'] = implode(' > ', $tokenChain);
 
+            $payload['onBehalfOfIds'] = [];
             if (isset($parentAdminTokenPayload['onBehalfOfIds'])) {
                 $payload['onBehalfOfIds'] = $parentAdminTokenPayload['onBehalfOfIds'];
             }
-            $payload['onBehalfOfIds'][] = $targetAdmin->getId();
+            $payload['onBehalfOfIds'][] = $parentAdminTokenPayload['id'] ?? -1;
 
-            $payload['onBehalfOf'] = implode(' > ', $tokenChain);
             $payload['iden'] = (string) $targetAdmin;
 
             $event->setData($payload);
