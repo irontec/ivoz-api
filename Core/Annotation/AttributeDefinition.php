@@ -20,10 +20,9 @@ final class AttributeDefinition
      */
     public $type;
 
-
     /**
      * Internal type of arrays
-     * @var string | null
+     * @var string
      */
     public $collectionValueType;
 

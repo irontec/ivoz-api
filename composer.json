@@ -3,6 +3,7 @@
     "description": "Api library built on api-platform for ivozprovider",
     "license": "GPL-3.0-or-later",
     "minimum-stability": "dev",
+    "prefer-stable": true,
     "authors": [
         {
             "name": "Carlos Cruz",
@@ -17,25 +18,36 @@
             "email": "mikel@irontec.com"
         }
     ],
-    "minimum-stability": "dev",
     "autoload": {
         "psr-4": {
             "Ivoz\\Api\\": ""
         }
     },
     "require": {
-        "php": ">=7.0.19",
-        "api-platform/core": "2.2.*",
-        "irontec/ivoz-core": "^3.3.9",
-        "gesdinet/jwt-refresh-token-bundle": "^0.6.2",
+        "php": ">=7.4",
+        "api-platform/core": "2.6.*",
+        "irontec/ivoz-core": "^4.16",
         "graze/guzzle-jsonrpc": "3.2.*",
-        "guzzlehttp/guzzle": "^6.3",
+        "guzzlehttp/guzzle": "^6.5.6",
         "lexik/jwt-authentication-bundle": "^2.5",
-        "symfony/expression-language": "3.4.*",
-        "symfony/finder": "3.4.*",
-        "symfony/http-foundation": "3.4.*",
-        "symfony/serializer": "3.4.*"
+        "symfony/expression-language": "^5.4",
+        "symfony/finder": "^5.4",
+        "symfony/http-foundation": "^5.4",
+        "symfony/routing": "^5.4",
+        "symfony/serializer": "^5.4",
+        "symfony/doctrine-bridge": "^5.4.21",
+        "symfony/property-info": "^5.4",
+        "twig/twig": "^3.8.0",
+        "symfony/twig-bridge": "^5.4.31",
+        "guzzlehttp/psr7": "^1.9.1",
+        "doctrine/annotations": "^1.14.3"
     },
     "require-dev": {
+        "phpstan/phpstan": "^1.0",
+        "behat/behat": "^3.8.1",
+        "behat/mink-browserkit-driver": "^2.0.0",
+        "friends-of-behat/mink-extension": "^2.5",
+        "behatch/contexts": "^3.3",
+        "phpunit/phpunit": "^9.5.3"
     }
 }

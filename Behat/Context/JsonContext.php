@@ -5,11 +5,13 @@ namespace Ivoz\Api\Behat\Context;
 use Behat\Behat\Context\Context;
 use Behat\Behat\Context\SnippetAcceptingContext;
 use Behat\Gherkin\Node\PyStringNode;
+use Behat\Mink\Exception\ExpectationException;
 use Behatch\Context\BaseContext;
 use Behatch\HttpCall\HttpCallResultPool;
 use Behatch\HttpCall\Request;
 use Behatch\Json\Json;
 use Behatch\Json\JsonInspector;
+use http\Exception\RuntimeException;
 
 /**
  * Defines application features from the specific context.
@@ -122,7 +124,7 @@ class JsonContext extends BaseContext implements Context, SnippetAcceptingContex
         } catch (\Exception $e) {
             $this->assert(
                 false,
-                "The json is equal to:\n". $actual->encode()
+                "The json is equal to:\n". $actual->encode() . "\nbut\n" . $e->getMessage()
             );
         }
     }
@@ -168,13 +170,29 @@ class JsonContext extends BaseContext implements Context, SnippetAcceptingContex
                     );
                 }
 
+                if($value === "~"){
+                    continue;
+                }
+
                 $this->assertAlike($expected[$key], $actual[$key]);
             }
 
             return;
         }
 
-        if ($expected !== '~') {
+        $matchingRules = preg_match(
+            '/match:(\w+)\((.+)\)/', //'/match:(\w)\((\w)\)/',
+            $expected,
+            $matches
+        );
+
+        if ($matchingRules) {
+            [, $matcher, $value] = $matches;
+            $this->applyMatcher($matcher, $value, $actual);
+
+            return;
+
+        } elseif ($expected !== '~') {
             $this->assert(
                 $expected === $actual,
                 "The element '$actual' is not equal to '$expected'"
@@ -188,6 +206,44 @@ class JsonContext extends BaseContext implements Context, SnippetAcceptingContex
                 false,
                 "Expected $actual to be an array"
             );
+        }
+    }
+
+    private function applyMatcher(string $matcher, $expected, $actual)
+    {
+        switch($matcher) {
+            case 'type':
+
+                $actualType = gettype($actual);
+                $castedExpectedVariable = $expected;
+
+                if ($actualType !== gettype($castedExpectedVariable)) {
+                    $succeeded = settype(
+                        $castedExpectedVariable,
+                        $actualType
+                    );
+
+                    if (!$succeeded) {
+                        throw new ExpectationException(
+                            'Unable to cast ' . $expected . ' to ' . $actualType,
+                            $this->getSession()->getDriver()
+                        );
+                    }
+                }
+
+                $this->assert(
+                    gettype($castedExpectedVariable) === gettype($actual),
+                    "Type of element '$actual' is not equal to '$expected'"
+                );
+                break;
+            case 'regexp':
+                $this->assert(
+                    preg_match($expected, (string) $actual),
+                    "The element '$actual' does not match regexp '$expected'"
+                );
+                break;
+            default:
+                throw new RuntimeException('Unknown matcher type ' . $matcher);
         }
     }
 }

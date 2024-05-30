@@ -2,9 +2,10 @@
 
 namespace Ivoz\Api\Swagger\Serializer\DocumentationNormalizer;
 
+use Symfony\Component\Serializer\Normalizer\CacheableSupportsMethodInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
-class TimezoneSelectorDecorator implements NormalizerInterface
+class TimezoneSelectorDecorator implements NormalizerInterface, CacheableSupportsMethodInterface
 {
     /**
      * @var NormalizerInterface
@@ -25,7 +26,17 @@ class TimezoneSelectorDecorator implements NormalizerInterface
     /**
      * {@inheritdoc}
      */
-    public function supportsNormalization($data, $format = null)
+    public function hasCacheableSupportsMethod(): bool
+    {
+        return
+            $this->decoratedNormalizer instanceof CacheableSupportsMethodInterface
+            && $this->decoratedNormalizer->hasCacheableSupportsMethod();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function supportsNormalization($data, string $format = null)
     {
         return $this->decoratedNormalizer->supportsNormalization(...func_get_args());
     }
@@ -33,7 +44,7 @@ class TimezoneSelectorDecorator implements NormalizerInterface
     /**
      * {@inheritdoc}
      */
-    public function normalize($object, $format = null, array $context = [])
+    public function normalize($object, string $format = null, array $context = [])
     {
         $response = $this->decoratedNormalizer->normalize(...func_get_args());
         $this->definitions = $response['definitions'];
@@ -81,6 +92,10 @@ class TimezoneSelectorDecorator implements NormalizerInterface
             return false;
         }
 
+        if (!isset($responseDefinition['properties'])) {
+            return false;
+        }
+
         foreach ($responseDefinition['properties'] as $property) {
             $propertyData = $property->getArrayCopy();
             $format = $propertyData['format'] ?? null;
@@ -111,12 +126,20 @@ class TimezoneSelectorDecorator implements NormalizerInterface
             return null;
         }
 
-        $successReponse = $path['responses'][$successCode]['schema'] ?? null;
-        if (!$successReponse) {
+        $successResponse = $path['responses'][$successCode]['schema'] ?? null;
+        if (!$successResponse) {
             return null;
         }
 
-        $ref = $successReponse['$ref'] ?? $successReponse['items']['$ref'];
+        if (array_key_exists('type', $successResponse) && $successResponse['type'] === 'file') {
+            return null;
+        }
+
+        if (!isset($successResponse['$ref']) && !isset($successResponse['items'])) {
+            return null;
+        }
+
+        $ref = $successResponse['$ref'] ?? $successResponse['items']['$ref'];
 
         if (!$ref) {
             return null;

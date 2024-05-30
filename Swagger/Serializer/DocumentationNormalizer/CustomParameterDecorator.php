@@ -2,9 +2,10 @@
 
 namespace Ivoz\Api\Swagger\Serializer\DocumentationNormalizer;
 
+use Symfony\Component\Serializer\Normalizer\CacheableSupportsMethodInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
-class CustomParameterDecorator implements NormalizerInterface
+class CustomParameterDecorator implements NormalizerInterface, CacheableSupportsMethodInterface
 {
     /**
      * @var NormalizerInterface
@@ -20,7 +21,17 @@ class CustomParameterDecorator implements NormalizerInterface
     /**
      * {@inheritdoc}
      */
-    public function supportsNormalization($data, $format = null)
+    public function hasCacheableSupportsMethod(): bool
+    {
+        return
+            $this->decoratedNormalizer instanceof CacheableSupportsMethodInterface
+            && $this->decoratedNormalizer->hasCacheableSupportsMethod();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function supportsNormalization($data, string $format = null)
     {
         return $this->decoratedNormalizer->supportsNormalization(...func_get_args());
     }
@@ -28,18 +39,27 @@ class CustomParameterDecorator implements NormalizerInterface
     /**
      * {@inheritdoc}
      */
-    public function normalize($object, $format = null, array $context = [])
+    public function normalize($object, string $format = null, array $context = [])
     {
         $response = $this->decoratedNormalizer->normalize(...func_get_args());
 
-        foreach ($response['paths'] as $paths) {
+        foreach ($response['paths'] as $name => $paths) {
             foreach ($paths as $path) {
                 $pathArray = $this->setUploadParams(
                     $path->getArrayCopy()
                 );
 
-                $pathArray = $this->setPaginationParams(
+                $pathArray = $this->setMultiDeleteParams(
                     $pathArray
+                );
+
+                $pathArray = $this->fixPaginationParams(
+                    $pathArray
+                );
+
+                $pathArray = $this->fixAutoinjectedBodyParam(
+                    $pathArray,
+                    $name
                 );
 
                 $path->exchangeArray($pathArray);
@@ -85,17 +105,77 @@ class CustomParameterDecorator implements NormalizerInterface
         return $pathArray;
     }
 
-    private function setPaginationParams(array $pathArray): array
+    private function setMultiDeleteParams(array $pathArray): array
     {
-        if (!array_key_exists('pagination_parameters', $pathArray)) {
+        $isDeleteOperation = array_key_exists(204, $pathArray['responses']);
+        if (!$isDeleteOperation) {
             return $pathArray;
         }
 
-        array_push(
-            $pathArray['parameters'],
-            ...$pathArray['pagination_parameters']
-        );
-        unset($pathArray['pagination_parameters']);
+        $pathArray['parameters'][] = [
+            'name' => '_rmAlso[]',
+            'in' => 'query',
+            'required' => false,
+            'type' => 'string',
+        ];
+
+        return $pathArray;
+    }
+
+
+    private function fixPaginationParams(array $pathArray): array
+    {
+        if (array_key_exists('pagination_parameters', $pathArray)) {
+            unset($pathArray['pagination_parameters']);
+        }
+
+        return $pathArray;
+    }
+
+    private function fixAutoinjectedBodyParam(array $pathArray, string $reqPath): array
+    {
+        $parameters = $pathArray['parameters'] ?? [];
+        foreach ($parameters as $key => $val) {
+            if (isset($val['name'])) {
+                continue;
+            }
+
+            unset($parameters[$key]);
+        }
+
+        if (empty($parameters)) {
+            return $pathArray;
+        }
+
+        $firstParamKey = array_key_first($parameters);
+        $firstParam = $parameters[$firstParamKey];
+
+        $lastParamKey = array_key_last($parameters);
+        $lastParam = $parameters[$lastParamKey];
+
+        if ($firstParam['in'] === 'formData' && $firstParam['in'] !== $lastParam['in']) {
+            /**
+             * Api platform is injecting a body param if none
+             * and this is causing issues with formData params
+             * https://github.com/api-platform/core/pull/3123
+             */
+            unset($parameters[$lastParamKey]);
+        }
+
+        // Filter parameters not found in path
+        foreach ($parameters as $k => $param) {
+            if ($param['in'] !== 'path') {
+                continue;
+            }
+
+            if (strpos($reqPath, '{' . $param['name'] . '}')) {
+                continue;
+            }
+
+            unset($parameters[$k]);
+        }
+
+        $pathArray['parameters'] = array_values($parameters);
 
         return $pathArray;
     }

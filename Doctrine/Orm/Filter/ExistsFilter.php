@@ -5,9 +5,11 @@ namespace Ivoz\Api\Doctrine\Orm\Filter;
 use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\ExistsFilter as BaseExistsFilter;
 use ApiPlatform\Core\Bridge\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Core\Metadata\Resource\Factory\ResourceMetadataFactoryInterface;
-use Doctrine\Common\Persistence\ManagerRegistry;
+use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\ORM\QueryBuilder;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\Serializer\NameConverter\NameConverterInterface;
 
 /**
  * @inheritdoc
@@ -20,13 +22,22 @@ class ExistsFilter extends BaseExistsFilter
 
     public function __construct(
         ManagerRegistry $managerRegistry,
-        $requestStack = null,
+        ResourceMetadataFactoryInterface $resourceMetadataFactory,
+        ?RequestStack $requestStack = null,
         LoggerInterface $logger = null,
         array $properties = null,
-        ResourceMetadataFactoryInterface $resourceMetadataFactory
+        string $existsParameterName = self::QUERY_PARAMETER_KEY,
+        NameConverterInterface $nameConverter = null
     ) {
         $this->resourceMetadataFactory = $resourceMetadataFactory;
-        parent::__construct($managerRegistry, $requestStack, $logger, $properties);
+        parent::__construct(
+            $managerRegistry,
+            $requestStack,
+            $logger,
+            $properties,
+            $existsParameterName,
+            $nameConverter
+        );
     }
 
     /**
@@ -37,9 +48,30 @@ class ExistsFilter extends BaseExistsFilter
         $metadata = $this->resourceMetadataFactory->create($resourceClass);
         $this->overrideProperties($metadata->getAttributes());
 
-        return $this->filterDescription(
+        $description = $this->addDeprecatedExistsFilters(
             parent::getDescription($resourceClass)
         );
+
+        return $this->filterDescription(
+            $description
+        );
+    }
+
+    private function addDeprecatedExistsFilters(array $description)
+    {
+        $deprecatedDescription = [];
+        foreach ($description as $key => $value) {
+            [, $field] = explode('[', substr($key, 0, -1));
+            $deprecatedKey = $field . '[exists]';
+            $deprecatedValue = array_merge(
+                $value,
+                ['description' => 'deprecated']
+            );
+
+            $deprecatedDescription[$deprecatedKey] = $deprecatedValue;
+        }
+
+        return array_merge($deprecatedDescription, $description);
     }
 
     /**

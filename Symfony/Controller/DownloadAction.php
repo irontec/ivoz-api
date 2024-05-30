@@ -2,8 +2,8 @@
 
 namespace Ivoz\Api\Symfony\Controller;
 
-use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\Service\EntityTools;
+use Ivoz\Core\Domain\DataTransferObjectInterface;
+use Ivoz\Core\Domain\Service\EntityTools;
 use Ivoz\Core\Domain\Service\FileContainerInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Request;
@@ -122,11 +122,20 @@ class DownloadAction
 
         $disposition = $response->headers->makeDisposition(
             $forceDownload ? ResponseHeaderBag::DISPOSITION_ATTACHMENT : ResponseHeaderBag::DISPOSITION_INLINE,
-            $fileName
+            $this->sanitizeFileName($fileName)
         );
         $response->headers->set('Content-Disposition', $disposition);
         $response->headers->set('Content-Type', $mimeType ?: 'application/octet-stream');
 
         return $response;
+    }
+
+    private function sanitizeFileName(string $fileName): string
+    {
+        return str_replace(
+            ' ',
+            '_',
+            $fileName
+        );
     }
 }

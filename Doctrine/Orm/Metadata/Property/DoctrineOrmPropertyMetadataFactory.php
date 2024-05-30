@@ -6,7 +6,7 @@ namespace Ivoz\Api\Doctrine\Orm\Metadata\Property;
 
 use ApiPlatform\Core\Metadata\Property\Factory\PropertyMetadataFactoryInterface;
 use ApiPlatform\Core\Metadata\Property\PropertyMetadata;
-use Doctrine\Common\Persistence\ManagerRegistry;
+use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\PropertyInfo\Type;
 
 /**
@@ -45,7 +45,10 @@ final class DoctrineOrmPropertyMetadataFactory implements PropertyMetadataFactor
                     Type::BUILTIN_TYPE_OBJECT,
                     false,
                     $field['targetEntity']
-                )
+                ),
+                '',
+                true,
+                $field['isOwningSide'] ?? false
             );
         } catch (\Exception $e) {
             return new PropertyMetadata(

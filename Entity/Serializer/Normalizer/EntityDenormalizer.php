@@ -8,14 +8,15 @@ use ApiPlatform\Core\Metadata\Property\PropertyNameCollection;
 use Doctrine\DBAL\Query\Expression\CompositeExpression;
 use Ivoz\Api\Core\Security\DataAccessControlParser;
 use Ivoz\Api\Entity\Metadata\Property\Factory\PropertyNameCollectionFactory;
-use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\Service\Assembler\DtoAssembler;
-use Ivoz\Core\Application\Service\CreateEntityFromDto;
-use Ivoz\Core\Application\Service\UpdateEntityFromDto;
+use Ivoz\Core\Domain\DataTransferObjectInterface;
+use Ivoz\Core\Domain\Service\Assembler\DtoAssembler;
+use Ivoz\Core\Domain\Service\CreateEntityFromDto;
+use Ivoz\Core\Domain\Service\UpdateEntityFromDto;
 use Ivoz\Core\Domain\Model\EntityInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 
 /**
@@ -43,7 +44,7 @@ class EntityDenormalizer implements DenormalizerInterface
         PropertyNameCollectionFactory $propertyNameCollectionFactory,
         PropertyMetadataFactoryInterface $propertyMetadataFactory,
         DataAccessControlParser $dataAccessControlParser,
-        TokenStorage $tokenStorage,
+        TokenStorageInterface $tokenStorage,
         RequestStack $requestStack
     ) {
         $this->createEntityFromDto = $createEntityFromDto;
@@ -61,7 +62,7 @@ class EntityDenormalizer implements DenormalizerInterface
     /**
      * {@inheritdoc}
      */
-    public function supportsDenormalization($data, $type, $format = null)
+    public function supportsDenormalization($data, $type, string $format = null)
     {
         return class_exists($type . 'Dto');
     }
@@ -71,26 +72,50 @@ class EntityDenormalizer implements DenormalizerInterface
      *
      * @throws InvalidArgumentException
      */
-    public function denormalize($data, $class, $format = null, array $context = [])
+    public function denormalize($data, $class, string $format = null, array $context = [])
     {
         $data = $this->denormalizeDateTimes($data, $class);
 
         $files = $this->requestStack->getCurrentRequest()->files;
+        /**
+         * @var string $name
+         * @var UploadedFile $file
+         */
         foreach ($files->all() as $name => $file) {
             $name = lcfirst($name);
             if (!isset($data[$name])) {
                 $data[$name] = [];
             }
 
-            $data[$name] += [
-                'fileSize' => $file->getClientSize(),
-                'mimeType' => $file->getClientMimeType(),
-                'baseName' => $file->getClientOriginalName(),
-                'path' => $file->getPathname(),
-            ];
+            $data = array_merge(
+                $data,
+                [
+                    $name => [
+                        'fileSize' => $file->getSize(),
+                        'mimeType' => $file->getClientMimeType(),
+                        'baseName' => $file->getClientOriginalName(),
+                        'path' => $file->getPathname(),
+                    ]
+                ]
+            );
         }
 
-        $context['operation_type'] = $context['operation_normalization_context'] ?? DataTransferObjectInterface::CONTEXT_SIMPLE;
+        $normalizationContext = $context['operation_normalization_context'] ?? null;
+        if (!$normalizationContext) {
+
+            $isDetailedItem =
+                isset($context['item_operation_name'])
+                && $context['item_operation_name'] === 'get';
+
+            switch (true) {
+                case $isDetailedItem:
+                    $normalizationContext = DataTransferObjectInterface::CONTEXT_DETAILED;
+                    break;
+                default:
+                    $normalizationContext = DataTransferObjectInterface::CONTEXT_SIMPLE;;
+            }
+        }
+
         $entity = array_key_exists('object_to_populate', $context)
             ? $context['object_to_populate']
             : null;
@@ -99,7 +124,7 @@ class EntityDenormalizer implements DenormalizerInterface
             $data,
             $class,
             $entity,
-            $context['operation_type']
+            $normalizationContext
         );
     }
 
@@ -171,7 +196,7 @@ class EntityDenormalizer implements DenormalizerInterface
         );
 
         $dto = $entity
-            ? $this->dtoAssembler->toDto($entity)
+            ? $this->dtoAssembler->toDto(targetEntity: $entity, context: $normalizationContext)
             : $dto;
 
         $baseData = $dto->toArray();
@@ -186,11 +211,9 @@ class EntityDenormalizer implements DenormalizerInterface
 
         $token = $this->tokenStorage->getToken();
         $roles = $token
-            ? $token->getRoles()
+            ? $token->getRoleNames()
             : [];
-        $role = !empty($roles)
-            ? $roles[0]->getRole()
-            : null;
+        $role = current($roles);
 
         $dto->denormalize(
             $data,

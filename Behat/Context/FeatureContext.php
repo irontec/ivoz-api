@@ -6,11 +6,13 @@ use Behat\Behat\Context\Context;
 use Behat\Behat\Context\SnippetAcceptingContext;
 use Behat\Gherkin\Node\PyStringNode;
 use Behat\Mink\Exception\ExpectationException;
+use Behat\MinkExtension\Context\MinkContext;
 use Behat\MinkExtension\Context\RawMinkContext;
 use Behatch\HttpCall\Request;
 use Ivoz\Provider\Domain\Model\Administrator\AdministratorRepository;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\HttpKernel\KernelInterface;
 
 /**
  * Defines application features from the specific context.
@@ -27,7 +29,7 @@ class FeatureContext extends RawMinkContext implements Context, SnippetAccepting
     protected $fs;
 
     /**
-     * @var Request
+     * @var Request | Request\BrowserKit
      */
     protected $request;
 
@@ -47,16 +49,27 @@ class FeatureContext extends RawMinkContext implements Context, SnippetAccepting
      * context constructor through behat.yml.
      */
     public function __construct(
-        \AppKernel $kernel,
-        Request $request
+        KernelInterface $kernel
     ) {
         $this->cacheDir = $kernel->getCacheDir();
         $this->fs = new Filesystem();
-        $this->request = $request;
+
         $this->jwtTokenManager = $kernel->getContainer()->get('lexik_jwt_authentication.jwt_manager.public');
-        $this->administratorRepository = $kernel->getContainer()->get(
-            AdministratorRepository::class
+        $container = $kernel->getContainer();
+        $this->administratorRepository = $container->get(
+            $container->getParameter('behat.feature_context.admin_repository')
         );
+    }
+
+    /**
+     * @BeforeScenario
+     */
+    public function gatherContext($context): void
+    {
+        /** @var MinkContext $minkContext */
+        $minkContext = $context->getEnvironment()->getContext(MinkContext::class);
+        $mink = $minkContext->getMink();
+        $this->request = new Request($mink);
     }
 
     /**
@@ -114,7 +127,7 @@ class FeatureContext extends RawMinkContext implements Context, SnippetAccepting
 
         $this->assert(
             $expected == $actual,
-            $message ?: "The element '$actual' is not equal to '$expected'"
+            $message
         );
     }
 
@@ -187,7 +200,7 @@ class FeatureContext extends RawMinkContext implements Context, SnippetAccepting
     }
 
     /**
-     * @param $username
+     * @param string $username
      * @return string | null
      * @throws \Exception
      */

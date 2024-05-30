@@ -6,7 +6,7 @@ use ApiPlatform\Core\Util\ErrorFormatGuesser;
 use Assert\InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Event\GetResponseForExceptionEvent;
+use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\Serializer\SerializerInterface;
 
 class DomainExceptionListener
@@ -28,13 +28,15 @@ class DomainExceptionListener
     /**
      * Returns formatted error message
      *
-     * @param GetResponseForExceptionEvent $event
+     * @param ExceptionEvent $event
      * @return void
      */
-    public function onKernelException(GetResponseForExceptionEvent $event)
+    public function onKernelException(ExceptionEvent $event)
     {
-        $exception = $event->getException();
-        $this->logger->error($exception->getMessage());
+        $exception = $event->getThrowable();
+        $this->logger->error(
+            $exception->getMessage()
+        );
 
         $exceptionClass = get_class($exception);
         $publicExceptions = [
@@ -47,8 +49,13 @@ class DomainExceptionListener
             return;
         }
 
-        $format = ErrorFormatGuesser::guessErrorFormat($event->getRequest(), $this->errorFormats);
-        $event->setException($exception);
+        $format = ErrorFormatGuesser::guessErrorFormat(
+            $event->getRequest(),
+            $this->errorFormats
+        );
+
+        $event->setThrowable($exception);
+
         $errorCode = $exception->getCode();
         $responseCode = $errorCode > 400 && $errorCode < 600
             ? $exception->getCode()

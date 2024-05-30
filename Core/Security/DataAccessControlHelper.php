@@ -142,6 +142,7 @@ class DataAccessControlHelper
                 return '!=';
             case Comparison::IN:
                 return 'in';
+            case 'NOTIN':
             case Comparison::NIN:
                 return 'not in';
             case Comparison::CONTAINS:

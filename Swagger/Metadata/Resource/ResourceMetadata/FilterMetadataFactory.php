@@ -10,6 +10,7 @@ use Doctrine\ORM\Mapping\ClassMetadataInfo;
 use Ivoz\Api\Doctrine\Orm\Filter\BooleanFilter;
 use Ivoz\Api\Doctrine\Orm\Filter\DateFilter;
 use Ivoz\Api\Doctrine\Orm\Filter\ExistsFilter;
+use Ivoz\Api\Doctrine\Orm\Filter\NotEqualFilter;
 use Ivoz\Api\Doctrine\Orm\Filter\NumericFilter;
 
 use Ivoz\Api\Doctrine\Orm\Filter\OrderFilter;
@@ -19,7 +20,6 @@ use Ivoz\Api\Doctrine\Orm\Filter\SearchFilterEnd;
 use Ivoz\Api\Doctrine\Orm\Filter\SearchFilterExact;
 use Ivoz\Api\Doctrine\Orm\Filter\SearchFilterStart;
 use Ivoz\Api\Entity\Metadata\Property\Factory\PropertyNameCollectionFactory;
-use Ivoz\Core\Application\DataTransferObjectInterface;
 use Ivoz\Core\Domain\Model\EntityInterface;
 use Symfony\Bridge\Doctrine\ManagerRegistry;
 
@@ -76,6 +76,7 @@ class FilterMetadataFactory implements ResourceMetadataFactoryInterface
     {
         $filters = [
             SearchFilter::SERVICE_NAME => [],
+            NotEqualFilter::SERVICE_NAME => [],
             DateFilter::SERVICE_NAME => [],
             BooleanFilter::SERVICE_NAME => [],
             NumericFilter::SERVICE_NAME => [],
@@ -94,6 +95,7 @@ class FilterMetadataFactory implements ResourceMetadataFactoryInterface
             if ($this->isId($resourceClass, $attribute)) {
                 if ($type === 'integer') {
                     $filters[SearchFilterExact::SERVICE_NAME][$attribute] = SearchFilter::STRATEGY_EXACT;
+                    $filters[NotEqualFilter::SERVICE_NAME][$attribute] = null;
                 }
 
                 continue;
@@ -107,6 +109,7 @@ class FilterMetadataFactory implements ResourceMetadataFactoryInterface
                     $filters[SearchFilterExact::SERVICE_NAME][$attribute] = SearchFilter::STRATEGY_EXACT;
                     $filters[SearchFilterStart::SERVICE_NAME][$attribute] = SearchFilter::STRATEGY_START;
                     $filters[SearchFilterEnd::SERVICE_NAME][$attribute] = SearchFilter::STRATEGY_END;
+                    $filters[NotEqualFilter::SERVICE_NAME][$attribute] = null;
                     $isNullable = $this->isNullableField($resourceClass, $attribute);
                     if ($isNullable) {
                         $filters[ExistsFilter::SERVICE_NAME][$attribute] = ExistsFilter::QUERY_PARAMETER_KEY;
@@ -119,6 +122,7 @@ class FilterMetadataFactory implements ResourceMetadataFactoryInterface
                 case 'float':
                     $filters[NumericFilter::SERVICE_NAME][$attribute] = null;
                     $filters[RangeFilter::SERVICE_NAME][$attribute] = null;
+                    $filters[NotEqualFilter::SERVICE_NAME][$attribute] = null;
                     $isNullable = $this->isNullableField($resourceClass, $attribute);
                     if ($isNullable) {
                         $filters[ExistsFilter::SERVICE_NAME][$attribute] = ExistsFilter::QUERY_PARAMETER_KEY;
@@ -144,8 +148,10 @@ class FilterMetadataFactory implements ResourceMetadataFactoryInterface
                 case 'datetime':
                 case 'datetimetz':
                 case 'time':
-                    $filters[SearchFilter::SERVICE_NAME][$attribute] = SearchFilter::STRATEGY_START;
+                    $filters[SearchFilterExact::SERVICE_NAME][$attribute] = SearchFilter::STRATEGY_EXACT;
+                    $filters[SearchFilterStart::SERVICE_NAME][$attribute] = SearchFilter::STRATEGY_START;
                     $filters[DateFilter::SERVICE_NAME][$attribute] = null;
+                    $filters[NotEqualFilter::SERVICE_NAME][$attribute] = null;
                     $isNullable = $this->isNullableField($resourceClass, $attribute);
                     if ($isNullable) {
                         $filters[ExistsFilter::SERVICE_NAME][$attribute] = ExistsFilter::QUERY_PARAMETER_KEY;
@@ -207,7 +213,7 @@ class FilterMetadataFactory implements ResourceMetadataFactoryInterface
         }
 
         if (isset($metadata['id'])) {
-            return $metadata['id'];
+            return $metadata['id'] ?? null;
         }
 
         return false;
@@ -223,7 +229,8 @@ class FilterMetadataFactory implements ResourceMetadataFactoryInterface
         /** @var ClassMetadata $metadata */
         $metadata = $manager->getClassMetadata($resourceClass);
 
-        $items = $metadata->getMetadataValue('fieldMappings');
+        /** @var mixed[] $items */
+        $items = $metadata->getMetadataValue('fieldMappings') ?? [];
         $items += array_filter(
             $metadata->getMetadataValue('associationMappings'),
             function ($fld) {

@@ -6,7 +6,7 @@ use ApiPlatform\Core\Bridge\Doctrine\Orm\Extension\ContextAwareQueryResultCollec
 use ApiPlatform\Core\Bridge\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Core\Metadata\Resource\Factory\ResourceMetadataFactoryInterface;
 use ApiPlatform\Core\Metadata\Resource\ResourceMetadata;
-use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
 use Ivoz\Core\Infrastructure\Persistence\Doctrine\ORM\Query;
 use Symfony\Component\HttpFoundation\Request;
@@ -27,7 +27,7 @@ final class UnpaginatedResultGeneratorExtension implements ContextAwareQueryResu
     public function __construct(
         RequestStack $requestStack,
         ResourceMetadataFactoryInterface $resourceMetadataFactory,
-        EntityManager $entityManager,
+        EntityManagerInterface $entityManager,
         bool $enabled = true,
         bool $clientEnabled = false,
         string $enabledParameterName = 'pagination'
@@ -82,7 +82,7 @@ final class UnpaginatedResultGeneratorExtension implements ContextAwareQueryResu
         string $operationName = null,
         array $context = []
     ) {
-        ini_set('max_execution_time', 0);
+        ini_set('max_execution_time', '0');
 
         $connection =  $this
             ->entityManager

@@ -1,0 +1,66 @@
+parameters:
+    excludePaths:
+        analyse:
+            - vendor
+    ignoreErrors:
+        - '#Parameter \#2 \$hydrationMode of method Doctrine\\ORM\\Query::iterate\(\) expects [0-9\|]+string\|null, 101 given#'
+
+        -
+            message: "#^Deprecated in PHP 8\\.1\\: Required parameter \\$resourceMetadataFactory follows optional parameter \\$nameConverter\\.$#"
+            count: 1
+            path: Doctrine/Orm/Filter/BooleanFilter.php
+
+        -
+            message: "#^Deprecated in PHP 8\\.1\\: Required parameter \\$resourceMetadataFactory follows optional parameter \\$nameConverter\\.$#"
+            count: 1
+            path: Doctrine/Orm/Filter/DateFilter.php
+
+        -
+            message: "#^Deprecated in PHP 8\\.1\\: Required parameter \\$resourceMetadataFactory follows optional parameter \\$nameConverter\\.$#"
+            count: 1
+            path: Doctrine/Orm/Filter/NotEqualFilter.php
+
+        -
+            message: "#^Deprecated in PHP 8\\.1\\: Required parameter \\$resourceMetadataFactory follows optional parameter \\$nameConverter\\.$#"
+            count: 1
+            path: Doctrine/Orm/Filter/NumericFilter.php
+
+        -
+            message: "#^Deprecated in PHP 8\\.0\\: Required parameter \\$resourceMetadataFactory follows optional parameter \\$requestStack\\.$#"
+            count: 1
+            path: Doctrine/Orm/Filter/OrderFilter.php
+
+        -
+            message: "#^Deprecated in PHP 8\\.1\\: Required parameter \\$orderParameterName follows optional parameter \\$requestStack\\.$#"
+            count: 1
+            path: Doctrine/Orm/Filter/OrderFilter.php
+
+        -
+            message: "#^Deprecated in PHP 8\\.1\\: Required parameter \\$resourceMetadataFactory follows optional parameter \\$properties\\.$#"
+            count: 1
+            path: Doctrine/Orm/Filter/RangeFilter.php
+
+        -
+            message: "#^Deprecated in PHP 8\\.0\\: Required parameter \\$resourceMetadataFactory follows optional parameter \\$requestStack\\.$#"
+            count: 1
+            path: Doctrine/Orm/Filter/SearchFilter.php
+
+        -
+            message: "#^Deprecated in PHP 8\\.1\\: Required parameter \\$iriConverter follows optional parameter \\$requestStack\\.$#"
+            count: 1
+            path: Doctrine/Orm/Filter/SearchFilter.php
+
+        -
+            message: "#^Deprecated in PHP 8\\.0\\: Required parameter \\$propertyMetadataFactory follows optional parameter \\$requestStack\\.$#"
+            count: 1
+            path: Doctrine/Orm/Filter/SearchFilterExact.php
+
+        -
+            message: "#^Deprecated in PHP 8\\.0\\: Required parameter \\$resourceMetadataFactory follows optional parameter \\$requestStack\\.$#"
+            count: 1
+            path: Doctrine/Orm/Filter/SearchFilterExact.php
+
+        -
+            message: "#^Deprecated in PHP 8\\.1\\: Required parameter \\$iriConverter follows optional parameter \\$requestStack\\.$#"
+            count: 1
+            path: Doctrine/Orm/Filter/SearchFilterExact.php

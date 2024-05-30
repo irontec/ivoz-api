@@ -8,6 +8,8 @@ use ApiPlatform\Core\Metadata\Resource\Factory\ResourceMetadataFactoryInterface;
 use Doctrine\ORM\QueryBuilder;
 use Psr\Log\LoggerInterface;
 use Symfony\Bridge\Doctrine\ManagerRegistry;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\Serializer\NameConverter\NameConverterInterface;
 
 /**
  * @inheritdoc
@@ -20,9 +22,10 @@ class BooleanFilter extends BaseBooleanFilter
 
     public function __construct(
         ManagerRegistry $managerRegistry,
-        $requestStack = null,
+        ?RequestStack $requestStack = null,
         LoggerInterface $logger = null,
         array $properties = null,
+        NameConverterInterface $nameConverter = null,
         ResourceMetadataFactoryInterface $resourceMetadataFactory
     ) {
         $this->resourceMetadataFactory = $resourceMetadataFactory;
@@ -30,7 +33,8 @@ class BooleanFilter extends BaseBooleanFilter
             $managerRegistry,
             $requestStack,
             $logger,
-            $properties
+            $properties,
+            $nameConverter
         );
     }
 

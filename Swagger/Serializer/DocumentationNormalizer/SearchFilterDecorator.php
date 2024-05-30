@@ -2,12 +2,16 @@
 
 namespace Ivoz\Api\Swagger\Serializer\DocumentationNormalizer;
 
+use ApiPlatform\Core\Bridge\Doctrine\Common\Filter\ExistsFilterInterface;
+use ApiPlatform\Core\Bridge\Doctrine\Common\Filter\RangeFilterInterface;
+use ApiPlatform\Core\Bridge\Doctrine\Common\Filter\SearchFilterInterface;
 use Ivoz\Core\Domain\Model\EntityInterface;
 use Symfony\Component\PropertyInfo\Type;
+use Symfony\Component\Serializer\Normalizer\CacheableSupportsMethodInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use ApiPlatform\Core\Metadata\Property\Factory\PropertyMetadataFactoryInterface;
 
-class SearchFilterDecorator implements NormalizerInterface
+class SearchFilterDecorator implements NormalizerInterface, CacheableSupportsMethodInterface
 {
     /**
      * @var NormalizerInterface
@@ -35,7 +39,17 @@ class SearchFilterDecorator implements NormalizerInterface
     /**
      * {@inheritdoc}
      */
-    public function supportsNormalization($data, $format = null)
+    public function hasCacheableSupportsMethod(): bool
+    {
+        return
+            $this->decoratedNormalizer instanceof CacheableSupportsMethodInterface
+            && $this->decoratedNormalizer->hasCacheableSupportsMethod();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function supportsNormalization($data, string $format = null)
     {
         return $this->decoratedNormalizer->supportsNormalization(...func_get_args());
     }
@@ -43,7 +57,7 @@ class SearchFilterDecorator implements NormalizerInterface
     /**
      * {@inheritdoc}
      */
-    public function normalize($object, $format = null, array $context = [])
+    public function normalize($object, string $format = null, array $context = [])
     {
         $resourceMapping = [];
         foreach ($object->getResourceNameCollection() as $resourceName) {
@@ -88,7 +102,7 @@ class SearchFilterDecorator implements NormalizerInterface
                 $responseDefinitionName
             );
 
-            if (!isset($responseModel['properties']) || is_null($responseModel['properties'])) {
+            if (!isset($responseModel['properties'])) {
                 continue;
             }
 
@@ -114,7 +128,7 @@ class SearchFilterDecorator implements NormalizerInterface
 
     /**
      * @param string $name
-     * @return string | null
+     * @return string
      */
     private function cleanRef(string $name)
     {
@@ -146,9 +160,9 @@ class SearchFilterDecorator implements NormalizerInterface
                     $nameMatch
                 );
 
-                if ($nameMatch[1] === '_order') {
-                    $orderFld = substr($nameMatch[2], 1, -1);
-                    $segments = explode('.', $orderFld);
+                if (in_array($nameMatch[1], ['_order', 'exists'], true)) {
+                    $fld = substr($nameMatch[2], 1, -1);
+                    $segments = explode('.', $fld);
                     return in_array(
                         $segments[0],
                         $propertyNames
@@ -214,8 +228,11 @@ class SearchFilterDecorator implements NormalizerInterface
                 continue;
             }
 
-            if (array_key_exists('$ref', $values)) {
+            if (array_key_exists('$ref', $values->getArrayCopy())) {
                 $responseModel = $this->getDefinitionByRef($values['$ref']);
+                if (!is_array($responseModel['properties'])) {
+                    continue;
+                }
                 $parameters = $this->appendPropertiesIntoParameters(
                     $parameters,
                     $responseModel['properties'],
@@ -225,6 +242,11 @@ class SearchFilterDecorator implements NormalizerInterface
             }
 
             $parameterExists = array_filter($parameters, function ($item) use ($prefix, $name) {
+
+                if (str_starts_with($item['name'], $prefix . $name . '.')) {
+                    return true;
+                }
+
                 return $item['name'] === ($prefix . $name);
             });
 
@@ -234,7 +256,6 @@ class SearchFilterDecorator implements NormalizerInterface
 
             $skip =
                 !isset($values['type'])
-                || is_null($values['type'])
                 || $values['type'] === Type::BUILTIN_TYPE_ARRAY;
 
             if ($skip) {
@@ -274,7 +295,59 @@ class SearchFilterDecorator implements NormalizerInterface
                     return -1;
                 }
 
-                return strnatcmp($str1, $str2);
+                /** @phpstan-ignore-next-line */
+                if ($isOrderAttribute1 || $isOrderAttribute2) {
+                    return strnatcmp($str1, $str2);
+                }
+
+                if (!str_contains($str1, '[') || !str_contains($str2, '[')) {
+                    return strnatcmp($str1, $str2);
+                }
+
+                $pattern = '/([^\[]+)\[(.*)\]/';
+                preg_match($pattern, $str1, $str1Segments);
+                preg_match($pattern, $str2, $str2Segments);
+
+                if (!$str1Segments || !$str2Segments) {
+                    return strnatcmp($str1, $str2);
+                }
+
+                if ($str1Segments[1] !== $str2Segments[1]) {
+                    return strnatcmp($str1, $str2);
+                }
+
+                $sortedFilters = [
+                    SearchFilterInterface::STRATEGY_EXACT,
+                    SearchFilterInterface::STRATEGY_START,
+                    SearchFilterInterface::STRATEGY_PARTIAL,
+                    SearchFilterInterface::STRATEGY_END,
+
+                    ExistsFilterInterface::QUERY_PARAMETER_KEY,
+
+                    RangeFilterInterface::PARAMETER_GREATER_THAN,
+                    RangeFilterInterface::PARAMETER_GREATER_THAN_OR_EQUAL,
+                    RangeFilterInterface::PARAMETER_LESS_THAN,
+                    RangeFilterInterface::PARAMETER_LESS_THAN_OR_EQUAL,
+
+                    RangeFilterInterface::PARAMETER_BETWEEN,
+                ];
+
+                $prio1 = array_search($str1Segments[2], $sortedFilters);
+                $prio2 = array_search($str2Segments[2], $sortedFilters);
+
+                if (false === $prio1 || false === $prio2) {
+                    return strnatcmp($str1, $str2);
+                }
+
+                if ($prio1 < $prio2) {
+                    return -1;
+                }
+
+                if ($prio1 > $prio2) {
+                    return 1;
+                }
+
+                return 0;
             }
         );
 

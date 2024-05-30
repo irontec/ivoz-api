@@ -5,9 +5,9 @@ namespace Ivoz\Api\Swagger\Metadata\Resource\ResourceMetadata;
 use ApiPlatform\Core\Exception\ResourceClassNotFoundException;
 use ApiPlatform\Core\Metadata\Resource\Factory\ResourceMetadataFactoryInterface;
 use ApiPlatform\Core\Metadata\Resource\ResourceMetadata;
-use Doctrine\Common\Persistence\ManagerRegistry;
+use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\ORM\Mapping\ClassMetadata;
-use Ivoz\Core\Application\DataTransferObjectInterface;
+use Ivoz\Core\Domain\DataTransferObjectInterface;
 use Ivoz\Core\Domain\Model\EntityInterface;
 
 class OperationMetadataFactory implements ResourceMetadataFactoryInterface
@@ -40,6 +40,7 @@ class OperationMetadataFactory implements ResourceMetadataFactoryInterface
         $resourceMetadata = $this->decorated->create($resourceClass);
         $isEntity = in_array(EntityInterface::class, class_implements($resourceClass));
         if ($isEntity) {
+
             $resourceClassSegments = explode('\\', $resourceClass);
 
             $resourceMetadata = $this->setEntityOperationMetadata(
@@ -181,7 +182,7 @@ class OperationMetadataFactory implements ResourceMetadataFactoryInterface
 
         return $this->setOperationTags(
             $resourceMetadata,
-            $tag ?? self::ENTITY_TAG
+            $tag
         );
     }
 

@@ -5,9 +5,11 @@ namespace Ivoz\Api\Doctrine\Orm\Filter;
 use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\RangeFilter as BaseRangeFilter;
 use ApiPlatform\Core\Bridge\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Core\Metadata\Resource\Factory\ResourceMetadataFactoryInterface;
-use Doctrine\Common\Persistence\ManagerRegistry;
+use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\ORM\QueryBuilder;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\Serializer\NameConverter\NameConverterInterface;
 
 /**
  * @inheritdoc
@@ -20,13 +22,20 @@ class RangeFilter extends BaseRangeFilter
 
     public function __construct(
         ManagerRegistry $managerRegistry,
-        $requestStack = null,
+        ?RequestStack $requestStack = null,
         LoggerInterface $logger = null,
         array $properties = null,
-        ResourceMetadataFactoryInterface $resourceMetadataFactory
+        ResourceMetadataFactoryInterface $resourceMetadataFactory,
+        NameConverterInterface $nameConverter = null
     ) {
         $this->resourceMetadataFactory = $resourceMetadataFactory;
-        parent::__construct($managerRegistry, $requestStack, $logger, $properties);
+        parent::__construct(
+            $managerRegistry,
+            $requestStack,
+            $logger,
+            $properties,
+            $nameConverter
+        );
     }
 
     /**

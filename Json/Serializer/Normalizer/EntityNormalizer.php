@@ -8,10 +8,10 @@ use ApiPlatform\Core\Metadata\Resource\ResourceMetadata;
 use Doctrine\ORM\Proxy\Proxy;
 use Ivoz\Api\Entity\Metadata\Property\Factory\PropertyNameCollectionFactory;
 use Ivoz\Api\Entity\Serializer\Normalizer\DateTimeNormalizerInterface;
-use Ivoz\Core\Application\DataTransferObjectInterface;
-use Ivoz\Core\Application\Service\Assembler\DtoAssembler;
+use Ivoz\Core\Domain\DataTransferObjectInterface;
+use Ivoz\Core\Domain\Service\Assembler\DtoAssembler;
 use Ivoz\Core\Domain\Model\EntityInterface;
-use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 /**
@@ -34,7 +34,7 @@ class EntityNormalizer implements NormalizerInterface
         DtoAssembler $dtoAssembler,
         DateTimeNormalizerInterface $dateTimeNormalizer,
         PropertyNameCollectionFactory $propertyNameCollectionFactory,
-        TokenStorage $tokenStorage
+        TokenStorageInterface $tokenStorage
     ) {
         $this->resourceClassResolver = $resourceClassResolver;
         $this->resourceMetadataFactory = $resourceMetadataFactory;
@@ -137,10 +137,34 @@ class EntityNormalizer implements NormalizerInterface
             $propertyMap = $dtoClass::getPropertyMap($normalizationContext);
             $this->initializeRelationships($entity, array_values($propertyMap));
         }
+
+        $normalizationContext = $context['operation_normalization_context'] ?? null;
+        if (!$normalizationContext) {
+            $isPostOperation =
+                isset($context['collection_operation_name'])
+                && $context['collection_operation_name'] === 'post';
+
+            $isDetailedItem =
+                isset($context['item_operation_name'])
+                && $context['item_operation_name'] === 'get'
+                && $depth > 0;
+
+            switch (true) {
+                case $isPostOperation:
+                    $normalizationContext = DataTransferObjectInterface::CONTEXT_EMPTY;
+                    break;
+                case $isDetailedItem:
+                    $normalizationContext = DataTransferObjectInterface::CONTEXT_DETAILED;
+                    break;
+                default:
+                    $normalizationContext = $context['operation_type'];
+            }
+        }
+
         $dto = $this->dtoAssembler->toDto(
             $entity,
             $depth,
-            $context['operation_normalization_context'] ?? null
+            $normalizationContext
         );
 
         return $this->normalizeDto(
@@ -171,11 +195,6 @@ class EntityNormalizer implements NormalizerInterface
         $depth = isset($context['item_operation_name'])
             ? $resourceMetadata->getItemOperationAttribute($context['item_operation_name'], 'depth', 1)
             : $resourceMetadata->getCollectionOperationAttribute($context['collection_operation_name'], 'depth', 0);
-
-        if ($depth > 0) {
-            $normalizationContext = $context['operation_normalization_context'] ?? $context['operation_type'] ?? '';
-            $propertyMap = $dto->getPropertyMap($normalizationContext);
-        }
 
         return $this->normalizeDto(
             $dto,
@@ -210,19 +229,29 @@ class EntityNormalizer implements NormalizerInterface
                 isset($context['collection_operation_name'])
                 && $context['collection_operation_name'] === 'post';
 
-            $normalizationContext = $isPostOperation
-                ? ''
-                : $context['operation_type'];
+            $isDetailedItem =
+                isset($context['item_operation_name'])
+                && $context['item_operation_name'] === 'get'
+                && $depth > 0;
+
+            switch (true) {
+                case $isPostOperation:
+                    $normalizationContext = DataTransferObjectInterface::CONTEXT_EMPTY;
+                    break;
+                case $isDetailedItem:
+                    $normalizationContext = DataTransferObjectInterface::CONTEXT_DETAILED;
+                    break;
+                default:
+                    $normalizationContext = $context['operation_type'] ?? DataTransferObjectInterface::CONTEXT_SIMPLE;
+            }
         }
         $forcedAttributes = $context['attributes'] ?? [];
 
         $token = $this->tokenStorage->getToken();
         $roles = $token
-            ? $token->getRoles()
+            ? $token->getRoleNames()
             : [];
-        $role = !empty($roles)
-            ? $roles[0]->getRole()
-            : null;
+        $role = current($roles);
 
         $rawData = $this->filterProperties(
             $dto->normalize($normalizationContext, $role),

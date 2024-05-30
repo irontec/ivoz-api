@@ -3,8 +3,8 @@
 namespace Ivoz\Api\Entity\Serializer\Normalizer;
 
 use ApiPlatform\Core\Metadata\Property\Factory\PropertyMetadataFactoryInterface;
-use Doctrine\Common\Persistence\Mapping\ClassMetadataFactory;
-use Doctrine\DBAL\Types\Type as DBALType;
+use Doctrine\DBAL\Types\Types as DBALType;
+use Doctrine\ORM\EntityManagerInterface;
 use Ivoz\Core\Infrastructure\Symfony\HttpFoundation\RequestDateTimeResolver;
 
 class DateTimeNormalizer implements DateTimeNormalizerInterface
@@ -14,11 +14,11 @@ class DateTimeNormalizer implements DateTimeNormalizerInterface
     private $requestDateTimeResolver;
 
     public function __construct(
-        ClassMetadataFactory $classMetadataFactory,
+        EntityManagerInterface $em,
         PropertyMetadataFactoryInterface $propertyMetadataFactory,
         RequestDateTimeResolver $requestDateTimeResolver
     ) {
-        $this->classMetadataFactory = $classMetadataFactory;
+        $this->classMetadataFactory = $em->getMetadataFactory();
         $this->propertyMetadataFactory = $propertyMetadataFactory;
         $this->requestDateTimeResolver = $requestDateTimeResolver;
     }
@@ -66,6 +66,11 @@ class DateTimeNormalizer implements DateTimeNormalizerInterface
         $utcTimeZone = new \DateTimeZone('UTC');
 
         if ($hasTimeZone) {
+
+            if (strtoupper($value) === 'CURRENT_TIMESTAMP') {
+                $value = null;
+            }
+
             $value = new \DateTime(
                 $value,
                 $this->requestDateTimeResolver->getTimezone()
@@ -105,11 +110,11 @@ class DateTimeNormalizer implements DateTimeNormalizerInterface
     {
         $type = $this->getFieldType($class, $field);
 
-        if ($type === DBALType::DATE) {
+        if ($type === DBALType::DATE_MUTABLE) {
             return 'Y-m-d';
         }
 
-        if ($type === DBALType::TIME) {
+        if ($type === DBALType::TIME_MUTABLE) {
             return 'H:i:s';
         }
 
@@ -123,9 +128,10 @@ class DateTimeNormalizer implements DateTimeNormalizerInterface
         return in_array(
             $type,
             [
-                DBALType::DATETIME,
-                DBALType::DATETIMETZ
+                DBALType::DATETIME_MUTABLE,
+                DBALType::DATETIMETZ_MUTABLE
             ]
         );
     }
 }
+

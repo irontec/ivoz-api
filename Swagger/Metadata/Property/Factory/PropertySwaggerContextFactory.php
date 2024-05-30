@@ -5,6 +5,7 @@ namespace Ivoz\Api\Swagger\Metadata\Property\Factory;
 use ApiPlatform\Core\Metadata\Property\Factory\PropertyMetadataFactoryInterface;
 use ApiPlatform\Core\Metadata\Property\PropertyMetadata;
 use Doctrine\Common\Persistence\Mapping\ClassMetadataFactory;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Mapping\ClassMetadataInfo;
 use Symfony\Component\PropertyInfo\Type;
@@ -17,11 +18,11 @@ class PropertySwaggerContextFactory implements PropertyMetadataFactoryInterface
     private $extractor;
 
     public function __construct(
-        ClassMetadataFactory $classMetadataFactory,
-        PropertyMetadataFactoryInterface $decorated = null,
+        EntityManagerInterface $em,
+        PropertyMetadataFactoryInterface $decorated,
         ExtractorInterface $extractor
     ) {
-        $this->classMetadataFactory = $classMetadataFactory;
+        $this->classMetadataFactory = $em->getMetadataFactory();
         $this->decorated = $decorated;
         $this->extractor = $extractor;
     }
@@ -67,7 +68,10 @@ class PropertySwaggerContextFactory implements PropertyMetadataFactoryInterface
             $column = $association['joinColumns'][0] ?? [];
             $isNullableFk =
                 (isset($column['nullable']) && $column['nullable'])
-                || (isset($column['onDelete']) && $column['onDelete'] === 'set null');
+                || (
+                    isset($column['onDelete'])
+                    && strtolower($column['onDelete']) === 'set null'
+                );
 
             $isRequiredFk =
                 !$isNullableFk
@@ -76,7 +80,12 @@ class PropertySwaggerContextFactory implements PropertyMetadataFactoryInterface
             return $propertyMetadata->withRequired($isRequiredFk);
         }
 
+        if (array_key_exists($property, $metadata->embeddedClasses)) {
+            return $propertyMetadata;
+        }
+
         try {
+            /** @psalm-var array<string, mixed> $fldMetadata */
             $fldMetadata = $metadata->getFieldMapping($property);
         } catch (\Exception $e) {
             return $propertyMetadata;

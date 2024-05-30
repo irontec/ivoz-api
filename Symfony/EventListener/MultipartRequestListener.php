@@ -5,14 +5,14 @@ namespace Ivoz\Api\Symfony\EventListener;
 use Ivoz\Api\Symfony\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\FileBag;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Event\GetResponseEvent;
+use Symfony\Component\HttpKernel\Event\RequestEvent;
 
 /**
  * Based on https://github.com/symfony/symfony/pull/10381/
 */
 class MultipartRequestListener
 {
-    public function onKernelRequest(GetResponseEvent $event)
+    public function onKernelRequest(RequestEvent $event)
     {
         $request = $event->getRequest();
 
@@ -57,8 +57,23 @@ class MultipartRequestListener
                 return;
             }
 
+            if (!isset($matches[1])) {
+                return;
+            }
+
+            if (empty($matches[1])) {
+                return;
+            }
+
             // Fetch and process each part
-            $parts = array_slice(explode($matches[1], $rawData), 1);
+            $parts = array_slice(
+                explode(
+                    $matches[1],
+                    $rawData
+                ),
+                1
+            );
+
             foreach ($parts as $part) {
                 // If this is the last part, break
                 if ($part === "--\r\n") {
@@ -112,6 +127,7 @@ class MultipartRequestListener
             }
         }
 
+        /** @phpstan-ignore-next-line  files */
         $request->files = new FileBag($files);
         $request->request->add($data);
         $this->setRequestContent(

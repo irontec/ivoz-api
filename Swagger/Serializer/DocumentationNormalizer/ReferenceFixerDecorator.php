@@ -2,10 +2,11 @@
 
 namespace Ivoz\Api\Swagger\Serializer\DocumentationNormalizer;
 
-use Ivoz\Core\Application\DataTransferObjectInterface;
+use Ivoz\Core\Domain\DataTransferObjectInterface;
+use Symfony\Component\Serializer\Normalizer\CacheableSupportsMethodInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
-class ReferenceFixerDecorator implements NormalizerInterface
+class ReferenceFixerDecorator implements NormalizerInterface, CacheableSupportsMethodInterface
 {
     /**
      * @var NormalizerInterface
@@ -21,7 +22,17 @@ class ReferenceFixerDecorator implements NormalizerInterface
     /**
      * {@inheritdoc}
      */
-    public function supportsNormalization($data, $format = null)
+    public function hasCacheableSupportsMethod(): bool
+    {
+        return
+            $this->decoratedNormalizer instanceof CacheableSupportsMethodInterface
+            && $this->decoratedNormalizer->hasCacheableSupportsMethod();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function supportsNormalization($data, string $format = null)
     {
         return $this->decoratedNormalizer->supportsNormalization(...func_get_args());
     }
@@ -29,7 +40,7 @@ class ReferenceFixerDecorator implements NormalizerInterface
     /**
      * {@inheritdoc}
      */
-    public function normalize($object, $format = null, array $context = [])
+    public function normalize($object, string $format = null, array $context = [])
     {
         $response = $this->decoratedNormalizer->normalize(...func_get_args());
         $response['definitions'] = $this->fixRelationReferences($response['definitions']);
@@ -37,9 +48,25 @@ class ReferenceFixerDecorator implements NormalizerInterface
         return $response;
     }
 
-    private function isEntity($resourceName)
+    private function isEntity($resourceName, \ArrayObject $definitions)
     {
-        return !strpos($resourceName, '_');
+        if (is_null($resourceName)) {
+            return false;
+        }
+
+        if (str_contains($resourceName, '_')) {
+            return false;
+        }
+
+        $definitionSegments = explode('/definitions/', $resourceName);
+        $definition = array_pop($definitionSegments);
+        $properties = $definitions[$definition]['properties'];
+
+        if (isset($properties['id'])) {
+            return true;
+        }
+
+        return false;
     }
 
     private function hasContext($definitionName)
@@ -53,20 +80,30 @@ class ReferenceFixerDecorator implements NormalizerInterface
     {
         $definitionKeys = array_keys($definitions->getArrayCopy());
         foreach ($definitionKeys as $key) {
-            if (!$this->isEntity($key)) {
+            if (!$this->isEntity($key, $definitions)) {
                 if ($this->hasContext($key)) {
+                    $root = current(
+                        explode('-', $key)
+                    );
+                    if (!isset($definitions[$root])) {
+                        $definitions[$root] = $definitions[$key];
+                    }
                     unset($definitions[$key]);
                 }
                 continue;
             }
 
-            if (!array_key_exists('properties', $definitions[$key])) {
+            if (!array_key_exists('properties', $definitions[$key]->getArrayCopy())) {
                 continue;
             }
 
             $context = explode('-', $key);
             foreach ($definitions[$key]['properties'] as $propertyKey => $property) {
-                $definitions[$key]['properties'][$propertyKey] = $this->fixRelationProperty($property, $context[1] ?? '');
+                $definitions[$key]['properties'][$propertyKey] = $this->fixRelationProperty(
+                    $property,
+                    $definitions,
+                    $context[1] ?? '',
+                );
                 if (is_null($definitions[$key]['properties'][$propertyKey])) {
                     unset($definitions[$key]['properties'][$propertyKey]);
                 }
@@ -76,17 +113,31 @@ class ReferenceFixerDecorator implements NormalizerInterface
         return $definitions;
     }
 
-    private function fixRelationProperty($property, $context = null)
+    private function fixRelationProperty($property, \ArrayObject $definitions, $context = null)
     {
-        $isCollection = array_key_exists('items', $property);
-        $isReference = array_key_exists('$ref', $property);
+        $arrayProperty = $property->getArrayCopy();
+        $isCollection = array_key_exists('items', $arrayProperty);
+        $isReference = array_key_exists('$ref', $arrayProperty);
+        $isArrayReference = array_key_exists('items', $arrayProperty) && array_key_exists('$ref', $arrayProperty['items']);
 
         if (!($isCollection || $isReference)) {
             return $property;
         }
 
         if ($isReference) {
-            return $this->setContext($property, $context);
+            return $this->setContext(
+                $property,
+                $context,
+                $definitions
+            );
+        }
+
+        if ($isArrayReference) {
+            return $this->setContext(
+                $property,
+                DataTransferObjectInterface::CONTEXT_SIMPLE,
+                $definitions
+            );
         }
 
         $hasRefAttr = array_key_exists('$ref', $property['items']);
@@ -97,13 +148,17 @@ class ReferenceFixerDecorator implements NormalizerInterface
         }
 
         if ($hasRefAttr) {
-            $property['items'] = $this->setContext($property['items'], $context);
+            $property['items'] = $this->setContext(
+                $property['items'],
+                $context,
+                $definitions
+            );
         }
 
         return $property;
     }
 
-    private function setContext($property, $context)
+    private function setContext($property, $context, \ArrayObject $definitions)
     {
         $noSublevelContexts = [
             DataTransferObjectInterface::CONTEXT_EMPTY,
@@ -111,16 +166,27 @@ class ReferenceFixerDecorator implements NormalizerInterface
             DataTransferObjectInterface::CONTEXT_COLLECTION
         ];
 
-        if ($this->isEntity($property['$ref']) && in_array($context, $noSublevelContexts)) {
+        $isCollection = ($property['type'] ?? null)  === 'array';
+        if ($this->isEntity($property['$ref'], $definitions) && in_array($context, $noSublevelContexts) && !$isCollection) {
             unset($property['$ref']);
             $property['type'] = 'integer';
+
             return $property;
         }
 
-        $refSegments = explode('-', $property['$ref']);
-        $property['$ref'] = $refSegments[0];
+        if ($property['$ref']) {
+            $refSegments = explode('-', $property['$ref']);
+            $property['$ref'] = $refSegments[0];
+        } else if ($isCollection && $property['items']['$ref']) {
+            $refSegments = explode('-', $property['items']['$ref']);
+            $property['items']['$ref'] = $refSegments[0];
+        }
 
-        if (array_key_exists('description', $property)) {
+        $arrayProperty = is_array($property)
+            ? $property
+            : $property->getArrayCopy();
+
+        if (array_key_exists('description', $arrayProperty) && !$isCollection) {
             unset($property['description']);
         }
 

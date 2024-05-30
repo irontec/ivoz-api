@@ -2,6 +2,7 @@
 
 namespace Ivoz\Api\Operation;
 
+use ApiPlatform\Core\EventListener\EventPriorities;
 use ApiPlatform\Core\Exception\ResourceClassNotFoundException;
 use Lexik\Bundle\JWTAuthenticationBundle\Event\JWTCreatedEvent;
 use Lexik\Bundle\JWTAuthenticationBundle\Events;
@@ -71,7 +72,7 @@ class ExchangeToken
             throw new \RuntimeException('Unable to find user ' . $username, 404);
         }
 
-        $payloadModifier = function (JWTCreatedEvent $event) use ($parentAdminTokenPayload) {
+        $payloadModifier = function (JWTCreatedEvent $event) use ($targetAdmin, $parentAdminTokenPayload) {
 
             $exp = new \DateTime(
                 '+' . $this->ttl,
@@ -91,15 +92,24 @@ class ExchangeToken
             if (isset($parentAdminTokenPayload['onBehalfOf'])) {
                 $tokenChain[] = $parentAdminTokenPayload['onBehalfOf'];
             }
-            $tokenChain[] = $parentAdminTokenPayload['username'];
-            $payload['onBehalfOf'] = implode(',', $tokenChain);
+            $tokenChain[] = $parentAdminTokenPayload['iden'];
+            $payload['onBehalfOf'] = implode(' > ', $tokenChain);
+
+            $payload['onBehalfOfIds'] = [];
+            if (isset($parentAdminTokenPayload['onBehalfOfIds'])) {
+                $payload['onBehalfOfIds'] = $parentAdminTokenPayload['onBehalfOfIds'];
+            }
+            $payload['onBehalfOfIds'][] = $parentAdminTokenPayload['id'] ?? -1;
+
+            $payload['iden'] = (string) $targetAdmin;
 
             $event->setData($payload);
         };
 
         $this->eventDispatcher->addListener(
             Events::JWT_CREATED,
-            $payloadModifier
+            $payloadModifier,
+            EventPriorities::PRE_VALIDATE
         );
 
         $newToken = $this->jwtTokenManager->create($targetAdmin);

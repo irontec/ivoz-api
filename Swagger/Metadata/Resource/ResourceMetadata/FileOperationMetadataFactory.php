@@ -4,7 +4,7 @@ namespace Ivoz\Api\Swagger\Metadata\Resource\ResourceMetadata;
 
 use ApiPlatform\Core\Metadata\Resource\Factory\ResourceMetadataFactoryInterface;
 use ApiPlatform\Core\Metadata\Resource\ResourceMetadata;
-use Doctrine\Common\Util\Inflector;
+use Doctrine\Inflector\InflectorFactory;
 use Ivoz\Api\Symfony\Controller\DownloadAction;
 use Ivoz\Core\Domain\Model\EntityInterface;
 use Ivoz\Core\Domain\Service\FileContainerInterface;
@@ -123,13 +123,14 @@ class FileOperationMetadataFactory implements ResourceMetadataFactoryInterface
             );
 
             $description = sprintf(
-                '%s %s',
+                '#/definitions/%s_%s',
                 $resourceMetadata->getShortName(),
-                lcfirst($fileObject)
+                ucfirst($fileObject)
             );
 
             $operation = [
                 'method' => 'GET',
+                'stateless' => null,
                 'path' => $path,
                 'controller' => DownloadAction::class,
                 'defaults' => [
@@ -141,6 +142,9 @@ class FileOperationMetadataFactory implements ResourceMetadataFactoryInterface
                     'responses' => [
                         '200' => [
                             'description' => $description,
+                            'schema' => [
+                                'type' => 'file'
+                            ],
                         ],
                         '404' => [
                             'description' => 'Resource not found'
@@ -167,8 +171,9 @@ class FileOperationMetadataFactory implements ResourceMetadataFactoryInterface
      */
     private function pluralize(string $name): string
     {
-        $name = Inflector::tableize($name);
+        $inflector = InflectorFactory::create()->build();
+        $name = $inflector->tableize($name);
 
-        return Inflector::pluralize($name);
+        return $inflector->pluralize($name);
     }
 }

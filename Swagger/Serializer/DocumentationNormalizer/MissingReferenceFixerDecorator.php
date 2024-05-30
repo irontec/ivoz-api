@@ -11,60 +11,34 @@ use ApiPlatform\Core\Metadata\Resource\Factory\ResourceMetadataFactoryInterface;
 use ApiPlatform\Core\Metadata\Resource\ResourceMetadata;
 use Symfony\Component\PropertyInfo\Type;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
+use Symfony\Component\Serializer\Normalizer\CacheableSupportsMethodInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
-class MissingReferenceFixerDecorator implements NormalizerInterface
+class MissingReferenceFixerDecorator implements NormalizerInterface, CacheableSupportsMethodInterface
 {
-    /**
-     * @var NormalizerInterface
-     */
-    protected $decoratedNormalizer;
-
-    /**
-     * @var PropertyNameCollectionFactoryInterface
-     */
-    protected $propertyNameCollectionFactory;
-
-    /**
-     * @var ResourceMetadataFactoryInterface
-     */
-    protected $resourceMetadataFactory;
-
-    /**
-     * @var PropertyMetadataFactoryInterface
-     */
-    protected $propertyMetadataFactory;
-
-    /**
-     * @var ResourceClassResolverInterface
-     */
-    protected $resourceClassResolver;
-
     public function __construct(
-        NormalizerInterface $decoratedNormalizer,
-        PropertyNameCollectionFactoryInterface $propertyNameCollectionFactory,
-        ResourceMetadataFactoryInterface $resourceMetadataFactory,
-        PropertyMetadataFactoryInterface $propertyMetadataFactory,
-        ResourceClassResolverInterface $resourceClassResolver
+        private NormalizerInterface $decoratedNormalizer,
+        private PropertyNameCollectionFactoryInterface $propertyNameCollectionFactory,
+        private ResourceMetadataFactoryInterface $resourceMetadataFactory,
+        private PropertyMetadataFactoryInterface $propertyMetadataFactory,
+        private ResourceClassResolverInterface $resourceClassResolver
     ) {
-        $this->resourceMetadataFactory = $resourceMetadataFactory;
-        $this->propertyNameCollectionFactory = $propertyNameCollectionFactory;
-        $this->propertyMetadataFactory = $propertyMetadataFactory;
-        $this->resourceClassResolver = $resourceClassResolver;
-
-        $reflection = new \ReflectionClass($decoratedNormalizer);
-        $property = $reflection->getProperty('propertyNameCollectionFactory');
-        $property->setAccessible(true);
-        $property->setValue($decoratedNormalizer, $propertyNameCollectionFactory);
-        $property->setAccessible(false);
-
-        $this->decoratedNormalizer = $decoratedNormalizer;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function supportsNormalization($data, $format = null)
+    public function hasCacheableSupportsMethod(): bool
+    {
+        return
+            $this->decoratedNormalizer instanceof CacheableSupportsMethodInterface
+            && $this->decoratedNormalizer->hasCacheableSupportsMethod();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function supportsNormalization($data, string $format = null)
     {
         return $this->decoratedNormalizer->supportsNormalization(...func_get_args());
     }
@@ -72,7 +46,7 @@ class MissingReferenceFixerDecorator implements NormalizerInterface
     /**
      * {@inheritdoc}
      */
-    public function normalize($object, $format = null, array $context = [])
+    public function normalize($object, string $format = null, array $context = [])
     {
         $response = $this->decoratedNormalizer->normalize(...func_get_args());
         $response['definitions'] = $this->registerPendingDefinitions(
@@ -104,6 +78,10 @@ class MissingReferenceFixerDecorator implements NormalizerInterface
                     : $resourceShortName . '-' . $group;
 
                 if (in_array($definitionKey, $pendingDefinitions, true)) {
+                    continue;
+                }
+
+                if (isset($definitions[$definitionKey])) {
                     continue;
                 }
 
@@ -183,7 +161,7 @@ class MissingReferenceFixerDecorator implements NormalizerInterface
      */
     private function getDefinitionSchema(string $resourceClass, ResourceMetadata $resourceMetadata, \ArrayObject $definitions, array $serializerContext = null): \ArrayObject
     {
-        $definitionSchema = new \ArrayObject(['type' => 'object']);
+        $definitionSchema = ['type' => 'object'];
 
         if (null !== $description = $resourceMetadata->getDescription()) {
             $definitionSchema['description'] = $description;
@@ -196,16 +174,24 @@ class MissingReferenceFixerDecorator implements NormalizerInterface
         $options = isset($serializerContext[AbstractNormalizer::GROUPS]) ? ['serializer_groups' => $serializerContext[AbstractNormalizer::GROUPS]] : [];
         foreach ($this->propertyNameCollectionFactory->create($resourceClass, $options) as $propertyName) {
             $propertyMetadata = $this->propertyMetadataFactory->create($resourceClass, $propertyName);
+            /** @var string $normalizedPropertyName */
             $normalizedPropertyName = $propertyName;
 
-            if ($propertyMetadata->isRequired()) {
+            if ($propertyMetadata->isRequired() && !$propertyMetadata->isIdentifier()) {
+                if (!isset($definitionSchema['required'])) {
+                    $definitionSchema['required'] = [];
+                }
+
                 $definitionSchema['required'][] = $normalizedPropertyName;
             }
 
+            if (!isset($definitionSchema['properties'])) {
+                $definitionSchema['properties'] = [];
+            }
             $definitionSchema['properties'][$normalizedPropertyName] = $this->getPropertySchema($propertyMetadata, $definitions, $serializerContext);
         }
 
-        return $definitionSchema;
+        return new \ArrayObject($definitionSchema);
     }
 
     /**
@@ -223,7 +209,7 @@ class MissingReferenceFixerDecorator implements NormalizerInterface
     {
         $propertySchema = new \ArrayObject($propertyMetadata->getAttributes()['swagger_context'] ?? []);
 
-        if (false === $propertyMetadata->isWritable()) {
+        if (false === $propertyMetadata->isWritable() || $propertyMetadata->isIdentifier()) {
             $propertySchema['readOnly'] = true;
         }
 
@@ -329,6 +315,11 @@ class MissingReferenceFixerDecorator implements NormalizerInterface
         }
 
         foreach ($definitions as $definition) {
+
+            if (!isset($definition['properties'])) {
+                continue;
+            }
+
             foreach ($definition['properties'] as $property) {
                 if (!isset($property['$ref'])) {
                     continue;

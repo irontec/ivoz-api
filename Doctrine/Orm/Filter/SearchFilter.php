@@ -2,17 +2,20 @@
 
 namespace Ivoz\Api\Doctrine\Orm\Filter;
 
+use ApiPlatform\Core\Api\IdentifiersExtractorInterface;
 use ApiPlatform\Core\Api\IriConverterInterface;
 use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter as BaseSearchFilter;
 use ApiPlatform\Core\Bridge\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Core\Metadata\Resource\Factory\ResourceMetadataFactoryInterface;
 use ApiPlatform\Core\Metadata\Resource\ResourceMetadata;
-use Doctrine\DBAL\Types\Type;
+use Doctrine\DBAL\Types\Types as Type;
 use Doctrine\ORM\QueryBuilder;
 use Ivoz\Core\Domain\Model\Helper\DateTimeHelper;
 use Psr\Log\LoggerInterface;
 use Symfony\Bridge\Doctrine\ManagerRegistry;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
+use Symfony\Component\Serializer\NameConverter\NameConverterInterface;
 
 /**
  * @inheritdoc
@@ -21,17 +24,28 @@ class SearchFilter extends BaseSearchFilter
 {
     const SERVICE_NAME = 'ivoz.api.filter.search';
 
+    const VALID_FILTERS = [
+        self::STRATEGY_EXACT,
+        self::STRATEGY_PARTIAL,
+        self::STRATEGY_START,
+        self::STRATEGY_END,
+        self::STRATEGY_WORD_START,
+    ];
+
     use FilterTrait;
 
+    protected $resourceMetadataFactory;
     protected $requestStack;
 
     public function __construct(
         ManagerRegistry $managerRegistry,
-        $requestStack = null,
+        ?RequestStack $requestStack = null,
         IriConverterInterface $iriConverter,
         PropertyAccessorInterface $propertyAccessor = null,
         LoggerInterface $logger = null,
         array $properties = null,
+        IdentifiersExtractorInterface $identifiersExtractor = null,
+        NameConverterInterface $nameConverter = null,
         ResourceMetadataFactoryInterface $resourceMetadataFactory
     ) {
         $this->resourceMetadataFactory = $resourceMetadataFactory;
@@ -42,7 +56,9 @@ class SearchFilter extends BaseSearchFilter
             $iriConverter,
             $propertyAccessor,
             $logger,
-            $properties
+            $properties,
+            $identifiersExtractor,
+            $nameConverter
         );
     }
 
@@ -119,10 +135,10 @@ class SearchFilter extends BaseSearchFilter
      *
      * @return string
      */
-    private function getType(string $doctrineType): string
+    protected function getType(string $doctrineType): string
     {
         switch ($doctrineType) {
-            case Type::TARRAY:
+            case Type::ARRAY:
                 return 'array';
             case Type::BIGINT:
             case Type::INTEGER:
@@ -130,10 +146,10 @@ class SearchFilter extends BaseSearchFilter
                 return 'int';
             case Type::BOOLEAN:
                 return 'bool';
-            case Type::DATE:
-            case Type::TIME:
-            case Type::DATETIME:
-            case Type::DATETIMETZ:
+            case Type::DATE_MUTABLE:
+            case Type::TIME_MUTABLE:
+            case Type::DATETIME_MUTABLE:
+            case Type::DATETIMETZ_MUTABLE:
                 return \DateTimeInterface::class;
             case Type::FLOAT:
                 return 'float';
@@ -164,25 +180,81 @@ class SearchFilter extends BaseSearchFilter
         array $context = []
     ) {
         $metadata = $this->resourceMetadataFactory->create($resourceClass);
-        $this->overrideProperties($metadata->getAttributes());
+        if (!$this->properties) {
+            $this->overrideProperties($metadata->getAttributes());
+        }
 
-        $context['filters'] = $this->dateFiltersToUtc(
-            $metadata,
-            $context['filters']
-        );
+        $contextCopy = (new \ArrayObject($context))->getArrayCopy();
+        $contextFilters = $contextCopy['filters'];
+        foreach ($contextFilters as $field => $filters) {
 
-        return parent::apply($queryBuilder, $queryNameGenerator, $resourceClass, $operationName, $context);
+            if (strpos($field, '_') === 0) {
+                continue;
+            }
+
+            if (!is_array($filters)) {
+                continue;
+            }
+
+            foreach ($filters as $filter => $value) {
+
+                $isInArrayFilter =
+                    is_numeric($filter)
+                    && array_key_exists($field, $this->properties)
+                    && $this->properties[$field] === self::STRATEGY_EXACT;
+
+                if ($isInArrayFilter) {
+                    continue;
+                }
+
+                $filterMissmatch =
+                    !array_key_exists($field, $this->properties)
+                    || $this->properties[$field] !== $filter;
+
+                if ($filterMissmatch) {
+                    unset($contextFilters[$field][$filter]);
+                    continue;
+                }
+
+                if (!in_array($filter, self::VALID_FILTERS)) {
+                    unset($contextFilters[$field][$filter]);
+                }
+            }
+
+            if (empty($contextFilters[$field])) {
+                unset($contextFilters[$field]);
+            }
+        }
+
+        if (get_class($this) === SearchFilter::class) {
+            $contextCopy['filters'] = $this->dateFiltersToUtc(
+                $metadata,
+                $contextFilters
+            );
+        }
+
+        $contextCopy['filters'] = $contextFilters;
+        if (empty($contextCopy['filters'])) {
+            return;
+        }
+
+        return parent::apply($queryBuilder, $queryNameGenerator, $resourceClass, $operationName, $contextCopy);
     }
 
     /**
      * @inherit
      */
-    protected function normalizeValues(array $values): array
+    protected function normalizeValues(array $values, string $property): ?array
     {
         foreach ($values as $key => $value) {
-            if (!is_numeric($key) && $key !== self::STRATEGY_PARTIAL) {
+            if (!is_numeric($key) && !in_array($key, self::VALID_FILTERS)) {
                 unset($values[$key]);
             }
+        }
+
+        $strategy = $this->properties[$property] ?? self::STRATEGY_EXACT;
+        if (array_key_exists($strategy, $values) && is_array($values[$strategy])) {
+            return array_values($values[$strategy]);
         }
 
         return array_values($values);
@@ -195,7 +267,12 @@ class SearchFilter extends BaseSearchFilter
                 continue;
             }
 
-            if (!is_scalar($criteria)) {
+            if (is_array($criteria)) {
+
+                foreach ($criteria as $filter => $value) {
+                    $filters[$field][$filter] = $this->stringToUtc($value);
+                }
+
                 continue;
             }
 
@@ -221,7 +298,7 @@ class SearchFilter extends BaseSearchFilter
     /**
      * @param ResourceMetadata $metadata
      * @param string $field
-     * @return bool|void
+     * @return ?bool
      */
     private function isDateTime(ResourceMetadata $metadata, string $field)
     {
@@ -230,7 +307,7 @@ class SearchFilter extends BaseSearchFilter
         );
 
         if (!array_key_exists(DateFilter::SERVICE_NAME, $filterFields)) {
-            return;
+            return null;
         }
         $dateFilterFields = $filterFields[DateFilter::SERVICE_NAME];
 

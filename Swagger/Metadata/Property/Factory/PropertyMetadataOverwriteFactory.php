@@ -42,23 +42,32 @@ class PropertyMetadataOverwriteFactory implements PropertyMetadataFactoryInterfa
     {
         /** @var PropertyMetadata $propertyMetadata */
         $propertyMetadata = $this->decorated->create(...func_get_args());
+
         $attributes = $propertyMetadata->getAttribute('swagger_context', []);
         $propertyMetadata = $propertyMetadata->withDescription(
             $attributes['description'] ?? ''
         );
 
+        $propertyMetadata = $propertyMetadata->withReadable(true);
+        $propertyMetadata = $propertyMetadata->withReadableLink(true);
+
         $readOnly = $attributes['readOnly'] ?? false;
-        if ($readOnly) {
-            $propertyMetadata = $propertyMetadata->withWritable(false);
-            $propertyMetadata = $propertyMetadata->withWritableLink(false);
-        }
+        $propertyMetadata = $propertyMetadata->withWritable(! $readOnly);
+        $propertyMetadata = $propertyMetadata->withWritableLink(! $readOnly);
 
         $reflectionProperty = $this->getReflectionProperty($resourceClass, $property);
+        if (!$reflectionProperty) {
+            $reflectionProperty = $this->getReflectionProperty(
+                $resourceClass . 'Dto',
+                $property
+            );
+        }
+
         if (!$reflectionProperty) {
             return $propertyMetadata;
         }
 
-        /** @var AttributeDefinition $annotation */
+        /** @var ?AttributeDefinition $annotation */
         $annotation = $this->reader->getPropertyAnnotation(
             $reflectionProperty,
             AttributeDefinition::class
@@ -90,7 +99,10 @@ class PropertyMetadataOverwriteFactory implements PropertyMetadataFactoryInterfa
         );
 
         $propertyMetadata = $propertyMetadata->withType($type);
-        $propertyMetadata = $propertyMetadata->withDescription($annotation->description);
+
+        /** @var ?string $description */
+        $description = $annotation->description;
+        $propertyMetadata = $propertyMetadata->withDescription($description ?? '');
         $propertyMetadata = $propertyMetadata->withRequired($annotation->required);
 
         return $propertyMetadata->withWritable($annotation->writable);
@@ -98,6 +110,15 @@ class PropertyMetadataOverwriteFactory implements PropertyMetadataFactoryInterfa
 
     private function getReflectionProperty(string $resourceClass, string $property)
     {
+        $isInterface = \interface_exists($resourceClass);
+        if ($isInterface) {
+            return null;
+        }
+
+        if (!class_exists($resourceClass)) {
+            return null;
+        }
+
         $reflectionClass = new \ReflectionClass($resourceClass);
         if ($reflectionClass->newInstanceWithoutConstructor() instanceof EntityInterface) {
             $dto = $resourceClass::createDto();
