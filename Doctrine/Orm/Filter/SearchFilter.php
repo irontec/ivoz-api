@@ -300,7 +300,7 @@ class SearchFilter extends BaseSearchFilter
      * @param string $field
      * @return ?bool
      */
-    protected function isDateTime(ResourceMetadata $metadata, string $field)
+    private function isDateTime(ResourceMetadata $metadata, string $field)
     {
         $filterFields = $metadata->getAttribute(
             'filterFields'
