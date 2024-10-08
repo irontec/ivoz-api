@@ -10,6 +10,7 @@ use Doctrine\Persistence\ObjectRepository;
 use Ivoz\Core\Infrastructure\Persistence\Doctrine\Model\Helper\CriteriaHelper;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
@@ -39,6 +40,7 @@ class DataAccessControlParser
     protected $tokenStorage;
     protected $resourceMetadataFactory;
     protected $accessControlEvaluator;
+    protected $authChecker;
 
     protected $expressionCache = [];
     protected $repositories = [];
@@ -46,6 +48,7 @@ class DataAccessControlParser
     public function __construct(
         RequestStack $requestStack,
         TokenStorageInterface $tokenStorage,
+        AuthorizationCheckerInterface $authChecker,
         ResourceMetadataFactoryInterface $resourceMetadataFactory,
         AccessControlEvaluator $accessControlEvaluator
     ) {
@@ -53,6 +56,7 @@ class DataAccessControlParser
         $this->tokenStorage = $tokenStorage;
         $this->resourceMetadataFactory = $resourceMetadataFactory;
         $this->accessControlEvaluator = $accessControlEvaluator;
+        $this->authChecker = $authChecker;
     }
 
     public function addRepository(string $name, ObjectRepository $repository)
@@ -203,6 +207,10 @@ class DataAccessControlParser
      */
     protected function getUserRoleOrThrowException(): string
     {
+        if ($this->authChecker->isGranted('IS_AUTHENTICATED_ANONYMOUSLY')) {
+            return 'IS_AUTHENTICATED_ANONYMOUSLY';
+        }
+
         $roles = $this->getUserOrThrowException()->getRoles();
 
         if (empty($roles)) {
