@@ -64,3 +64,8 @@ parameters:
             message: "#^Deprecated in PHP 8\\.1\\: Required parameter \\$iriConverter follows optional parameter \\$requestStack\\.$#"
             count: 1
             path: Doctrine/Orm/Filter/SearchFilterExact.php
+
+        -
+            message: "#Offset 1 on array\\{string, string\\} in isset\\(\\) always exists and is not nullable#"
+            count: 1
+            path: Symfony/EventListener/MultipartRequestListener.php
