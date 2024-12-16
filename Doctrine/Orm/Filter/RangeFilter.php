@@ -22,7 +22,7 @@ class RangeFilter extends BaseRangeFilter
 
     public function __construct(
         ManagerRegistry $managerRegistry,
-        ?RequestStack $requestStack = null,
+        ?RequestStack $requestStack,
         LoggerInterface $logger = null,
         array $properties = null,
         ResourceMetadataFactoryInterface $resourceMetadataFactory,

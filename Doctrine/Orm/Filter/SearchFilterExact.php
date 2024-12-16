@@ -25,7 +25,7 @@ class SearchFilterExact extends SearchFilter
 
     public function __construct(
         \Symfony\Bridge\Doctrine\ManagerRegistry $managerRegistry,
-        ?RequestStack $requestStack = null,
+        ?RequestStack $requestStack,
         IriConverterInterface $iriConverter,
         PropertyAccessorInterface $propertyAccessor = null,
         LoggerInterface $logger = null,

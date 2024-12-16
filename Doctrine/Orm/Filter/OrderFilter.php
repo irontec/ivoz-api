@@ -22,7 +22,7 @@ class OrderFilter extends BaseOrderFilter
 
     public function __construct(
         ManagerRegistry $managerRegistry,
-        ?RequestStack $requestStack = null,
+        ?RequestStack $requestStack,
         $orderParameterName,
         LoggerInterface $logger = null,
         array $properties = null,
