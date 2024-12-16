@@ -23,7 +23,7 @@ class ExistsFilter extends BaseExistsFilter
     public function __construct(
         ManagerRegistry $managerRegistry,
         ResourceMetadataFactoryInterface $resourceMetadataFactory,
-        ?RequestStack $requestStack = null,
+        ?RequestStack $requestStack,
         LoggerInterface $logger = null,
         array $properties = null,
         string $existsParameterName = self::QUERY_PARAMETER_KEY,

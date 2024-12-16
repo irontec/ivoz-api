@@ -22,7 +22,7 @@ class NumericFilter extends BaseNumericFilter
 
     public function __construct(
         ManagerRegistry $managerRegistry,
-        ?RequestStack $requestStack = null,
+        ?RequestStack $requestStack,
         LoggerInterface $logger = null,
         array $properties = null,
         NameConverterInterface $nameConverter = null,
