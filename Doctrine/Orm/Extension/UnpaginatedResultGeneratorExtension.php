@@ -46,8 +46,8 @@ final class UnpaginatedResultGeneratorExtension implements ContextAwareQueryResu
     public function applyToCollection(
         QueryBuilder $queryBuilder,
         QueryNameGeneratorInterface $queryNameGenerator,
-        string $resourceClass = null,
-        string $operationName = null,
+        ?string $resourceClass = null,
+        ?string $operationName = null,
         array $context = []
     ) {
     }
@@ -55,7 +55,7 @@ final class UnpaginatedResultGeneratorExtension implements ContextAwareQueryResu
     /**
      * {@inheritdoc}
      */
-    public function supportsResult(string $resourceClass, string $operationName = null, array $context = []): bool
+    public function supportsResult(string $resourceClass, ?string $operationName = null, array $context = []): bool
     {
         $request = $this->requestStack->getCurrentRequest();
         if (null === $request) {
@@ -78,8 +78,8 @@ final class UnpaginatedResultGeneratorExtension implements ContextAwareQueryResu
      */
     public function getResult(
         QueryBuilder $queryBuilder,
-        string $resourceClass = null,
-        string $operationName = null,
+        ?string $resourceClass = null,
+        ?string $operationName = null,
         array $context = []
     ) {
         ini_set('max_execution_time', '0');
@@ -131,7 +131,7 @@ final class UnpaginatedResultGeneratorExtension implements ContextAwareQueryResu
     private function isPaginationEnabled(
         Request $request,
         ResourceMetadata $resourceMetadata,
-        string $operationName = null
+        ?string $operationName = null
     ): bool {
         $enabled = $resourceMetadata->getCollectionOperationAttribute($operationName, 'pagination_enabled', $this->enabled, true);
         $clientEnabled = $resourceMetadata->getCollectionOperationAttribute($operationName, 'pagination_client_enabled', $this->clientEnabled, true);

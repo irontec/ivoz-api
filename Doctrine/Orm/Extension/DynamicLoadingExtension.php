@@ -36,8 +36,8 @@ final class DynamicLoadingExtension implements QueryItemExtensionInterface, Quer
         PropertyNameCollectionFactoryInterface $propertyNameCollectionFactory,
         PropertyMetadataFactoryInterface $propertyMetadataFactory,
         ResourceMetadataFactoryInterface $resourceMetadataFactory,
-        RequestStack $requestStack = null,
-        SerializerContextBuilderInterface $serializerContextBuilder = null
+        ?RequestStack $requestStack = null,
+        ?SerializerContextBuilderInterface $serializerContextBuilder = null
     ) {
         $this->propertyNameCollectionFactory = $propertyNameCollectionFactory;
         $this->propertyMetadataFactory = $propertyMetadataFactory;
@@ -54,7 +54,7 @@ final class DynamicLoadingExtension implements QueryItemExtensionInterface, Quer
         QueryNameGeneratorInterface $queryNameGenerator,
         string $resourceClass,
         array $identifiers,
-        string $operationName = null,
+        ?string $operationName = null,
         array $context = []
     ) {
         $options = [];
@@ -80,7 +80,7 @@ final class DynamicLoadingExtension implements QueryItemExtensionInterface, Quer
         QueryBuilder $queryBuilder,
         QueryNameGeneratorInterface $queryNameGenerator,
         string $resourceClass,
-        string $operationName = null
+        ?string $operationName = null
     ) {
         $options = [];
 
@@ -129,18 +129,6 @@ final class DynamicLoadingExtension implements QueryItemExtensionInterface, Quer
 
     /**
      * Joins relations to eager load.
-     *
-     * @param QueryBuilder $queryBuilder
-     * @param QueryNameGeneratorInterface $queryNameGenerator
-     * @param string $resourceClass
-     * @param string $parentAlias
-     * @param array $propertyMetadataOptions
-     * @param array $context
-     * @param bool $wasLeftJoin if the relation containing the new one had a left join, we have to force the new one to left join too
-     * @param int $joinCount the number of joins
-     * @param int $currentDepth the current max depth
-     *
-     * @throws RuntimeException when the max number of joins has been reached
      */
     private function joinRelations(
         QueryBuilder $queryBuilder,
@@ -151,7 +139,7 @@ final class DynamicLoadingExtension implements QueryItemExtensionInterface, Quer
         array $context = [],
         bool $wasLeftJoin = false,
         int &$joinCount = 0,
-        int $currentDepth = null
+        ?int $currentDepth = null
     ) {
         if (is_null($currentDepth)) {
             $isCollection = isset($context['collection']) && $context['collection'] === 'collection';
@@ -259,7 +247,7 @@ final class DynamicLoadingExtension implements QueryItemExtensionInterface, Quer
                     continue;
                 }
 
-                $embedddedProperty = array_key_exists(  
+                $embedddedProperty = array_key_exists(
                     $property,
                     $targetClassMetadata->embeddedClasses
                 );

@@ -39,7 +39,7 @@ class OrphanAttributeFixerDecorator implements NormalizerInterface, CacheableSup
     /**
      * {@inheritdoc}
      */
-    public function supportsNormalization($data, string $format = null)
+    public function supportsNormalization($data, ?string $format = null)
     {
         return $this->decoratedNormalizer->supportsNormalization(...func_get_args());
     }
@@ -47,7 +47,7 @@ class OrphanAttributeFixerDecorator implements NormalizerInterface, CacheableSup
     /**
      * {@inheritdoc}
      */
-    public function normalize($object, string $format = null, array $context = [])
+    public function normalize($object, ?string $format = null, array $context = [])
     {
         $response = $this->decoratedNormalizer->normalize(...func_get_args());
 

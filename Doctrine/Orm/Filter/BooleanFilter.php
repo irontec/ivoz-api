@@ -23,9 +23,9 @@ class BooleanFilter extends BaseBooleanFilter
     public function __construct(
         ManagerRegistry $managerRegistry,
         ?RequestStack $requestStack,
-        LoggerInterface $logger = null,
-        array $properties = null,
-        NameConverterInterface $nameConverter = null,
+        ?LoggerInterface $logger,
+        ?array $properties,
+        ?NameConverterInterface $nameConverter,
         ResourceMetadataFactoryInterface $resourceMetadataFactory
     ) {
         $this->resourceMetadataFactory = $resourceMetadataFactory;
@@ -58,7 +58,7 @@ class BooleanFilter extends BaseBooleanFilter
         QueryBuilder $queryBuilder,
         QueryNameGeneratorInterface $queryNameGenerator,
         string $resourceClass,
-        string $operationName = null,
+        ?string $operationName = null,
         array $context = []
     ) {
         $metadata = $this->resourceMetadataFactory->create($resourceClass);

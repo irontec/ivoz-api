@@ -24,9 +24,9 @@ class OrderFilter extends BaseOrderFilter
         ManagerRegistry $managerRegistry,
         ?RequestStack $requestStack,
         $orderParameterName,
-        LoggerInterface $logger = null,
-        array $properties = null,
-        NameConverterInterface $nameConverter = null,
+        ?LoggerInterface $logger,
+        ?array $properties,
+        ?NameConverterInterface $nameConverter,
         ResourceMetadataFactoryInterface $resourceMetadataFactory
     ) {
         $this->resourceMetadataFactory = $resourceMetadataFactory;
@@ -66,7 +66,7 @@ class OrderFilter extends BaseOrderFilter
         QueryBuilder $queryBuilder,
         QueryNameGeneratorInterface $queryNameGenerator,
         string $resourceClass,
-        string $operationName = null,
+        ?string $operationName = null,
         array $context = []
     ) {
         $metadata = $this->resourceMetadataFactory->create($resourceClass);

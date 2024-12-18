@@ -22,9 +22,9 @@ final class NotEqualFilter extends AbstractContextAwareFilter
     public function __construct(
         ManagerRegistry $managerRegistry,
         ?RequestStack $requestStack,
-        LoggerInterface $logger = null,
-        array $properties = null,
-        NameConverterInterface $nameConverter = null,
+        ?LoggerInterface $logger,
+        ?array $properties,
+        ?NameConverterInterface $nameConverter,
         ResourceMetadataFactoryInterface $resourceMetadataFactory
     ) {
         $this->resourceMetadataFactory = $resourceMetadataFactory;
@@ -44,7 +44,7 @@ final class NotEqualFilter extends AbstractContextAwareFilter
         QueryBuilder $queryBuilder,
         QueryNameGeneratorInterface $queryNameGenerator,
         string $resourceClass,
-        string $operationName = null,
+        ?string $operationName = null,
         array $context = []
     ) {
         $metadata = $this->resourceMetadataFactory->create($resourceClass);
@@ -53,7 +53,7 @@ final class NotEqualFilter extends AbstractContextAwareFilter
         return parent::apply($queryBuilder, $queryNameGenerator, $resourceClass, $operationName, $context);
     }
 
-    protected function filterProperty(string $property, $value, QueryBuilder $queryBuilder, QueryNameGeneratorInterface $queryNameGenerator, string $resourceClass, string $operationName = null)
+    protected function filterProperty(string $property, $value, QueryBuilder $queryBuilder, QueryNameGeneratorInterface $queryNameGenerator, string $resourceClass, ?string $operationName = null)
     {
         // otherwise filter is applied to order and page as well
         if (

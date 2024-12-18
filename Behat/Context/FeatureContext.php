@@ -96,7 +96,7 @@ class FeatureContext extends RawMinkContext implements Context, SnippetAccepting
     /**
      * @When I send a :method multipart request to :url with body:
      */
-    public function iSendAMultipartRequestTo($method, $url, PyStringNode $body = null, $files = [])
+    public function iSendAMultipartRequestTo($method, $url, ?PyStringNode $body = null, $files = [])
     {
         if ($body !== null) {
             $body = implode(

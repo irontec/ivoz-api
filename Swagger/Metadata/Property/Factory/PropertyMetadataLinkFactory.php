@@ -10,7 +10,7 @@ class PropertyMetadataLinkFactory implements PropertyMetadataFactoryInterface
 {
     private $decorated;
 
-    public function __construct(PropertyMetadataFactoryInterface $decorated = null)
+    public function __construct(?PropertyMetadataFactoryInterface $decorated = null)
     {
         $this->decorated = $decorated;
     }

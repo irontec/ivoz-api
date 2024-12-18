@@ -38,7 +38,7 @@ class MissingReferenceFixerDecorator implements NormalizerInterface, CacheableSu
     /**
      * {@inheritdoc}
      */
-    public function supportsNormalization($data, string $format = null)
+    public function supportsNormalization($data, ?string $format = null)
     {
         return $this->decoratedNormalizer->supportsNormalization(...func_get_args());
     }
@@ -46,7 +46,7 @@ class MissingReferenceFixerDecorator implements NormalizerInterface, CacheableSu
     /**
      * {@inheritdoc}
      */
-    public function normalize($object, string $format = null, array $context = [])
+    public function normalize($object, ?string $format = null, array $context = [])
     {
         $response = $this->decoratedNormalizer->normalize(...func_get_args());
         $response['definitions'] = $this->registerPendingDefinitions(
@@ -136,7 +136,7 @@ class MissingReferenceFixerDecorator implements NormalizerInterface, CacheableSu
      *
      * @return string
      */
-    private function getDefinition(\ArrayObject $definitions, ResourceMetadata $resourceMetadata, string $resourceClass, array $serializerContext = null): string
+    private function getDefinition(\ArrayObject $definitions, ResourceMetadata $resourceMetadata, string $resourceClass, ?array $serializerContext = null): string
     {
         $definitionKey = $resourceMetadata->getShortName();
         if (!isset($definitions[$definitionKey])) {
@@ -159,7 +159,7 @@ class MissingReferenceFixerDecorator implements NormalizerInterface, CacheableSu
      *
      * @return \ArrayObject
      */
-    private function getDefinitionSchema(string $resourceClass, ResourceMetadata $resourceMetadata, \ArrayObject $definitions, array $serializerContext = null): \ArrayObject
+    private function getDefinitionSchema(string $resourceClass, ResourceMetadata $resourceMetadata, \ArrayObject $definitions, ?array $serializerContext = null): \ArrayObject
     {
         $definitionSchema = ['type' => 'object'];
 
@@ -205,7 +205,7 @@ class MissingReferenceFixerDecorator implements NormalizerInterface, CacheableSu
      *
      * @return \ArrayObject
      */
-    private function getPropertySchema(PropertyMetadata $propertyMetadata, \ArrayObject $definitions, array $serializerContext = null): \ArrayObject
+    private function getPropertySchema(PropertyMetadata $propertyMetadata, \ArrayObject $definitions, ?array $serializerContext = null): \ArrayObject
     {
         $propertySchema = new \ArrayObject($propertyMetadata->getAttributes()['swagger_context'] ?? []);
 
@@ -249,7 +249,7 @@ class MissingReferenceFixerDecorator implements NormalizerInterface, CacheableSu
      *
      * @return array
      */
-    private function getType(string $type, bool $isCollection, string $className = null, bool $readableLink = null, \ArrayObject $definitions, array $serializerContext = null): array
+    private function getType(string $type, bool $isCollection, ?string $className = null, ?bool $readableLink = null, \ArrayObject $definitions, ?array $serializerContext = null): array
     {
         if ($isCollection) {
             return ['type' => 'array', 'items' => $this->getType($type, false, $className, $readableLink, $definitions, $serializerContext)];

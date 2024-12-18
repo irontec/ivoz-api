@@ -41,11 +41,11 @@ class SearchFilter extends BaseSearchFilter
         ManagerRegistry $managerRegistry,
         ?RequestStack $requestStack,
         IriConverterInterface $iriConverter,
-        PropertyAccessorInterface $propertyAccessor = null,
-        LoggerInterface $logger = null,
-        array $properties = null,
-        IdentifiersExtractorInterface $identifiersExtractor = null,
-        NameConverterInterface $nameConverter = null,
+        ?PropertyAccessorInterface $propertyAccessor,
+        ?LoggerInterface $logger,
+        ?array $properties,
+        ?IdentifiersExtractorInterface $identifiersExtractor,
+        ?NameConverterInterface $nameConverter,
         ResourceMetadataFactoryInterface $resourceMetadataFactory
     ) {
         $this->resourceMetadataFactory = $resourceMetadataFactory;
@@ -176,7 +176,7 @@ class SearchFilter extends BaseSearchFilter
         QueryBuilder $queryBuilder,
         QueryNameGeneratorInterface $queryNameGenerator,
         string $resourceClass,
-        string $operationName = null,
+        ?string $operationName = null,
         array $context = []
     ) {
         $metadata = $this->resourceMetadataFactory->create($resourceClass);

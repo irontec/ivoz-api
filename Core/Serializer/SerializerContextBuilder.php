@@ -20,7 +20,7 @@ final class SerializerContextBuilder implements SerializerContextBuilderInterfac
     /**
      * {@inheritdoc}
      */
-    public function createFromRequest(Request $request, bool $normalization, array $attributes = null): array
+    public function createFromRequest(Request $request, bool $normalization, ?array $attributes = null): array
     {
         $context = $this->decorated->createFromRequest(
             $request,
@@ -34,7 +34,7 @@ final class SerializerContextBuilder implements SerializerContextBuilderInterfac
         );
     }
 
-    private function operationTypeOverwrite(array $context, array $attributes = null)
+    private function operationTypeOverwrite(array $context, ?array $attributes = null)
     {
         $resourceMetadata = $this->resourceMetadataFactory->create($attributes['resource_class']);
 

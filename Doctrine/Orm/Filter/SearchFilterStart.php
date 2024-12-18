@@ -23,7 +23,7 @@ class SearchFilterStart extends SearchFilter
 {
     const SERVICE_NAME = 'ivoz.api.filter.search_start';
 
-    public function apply(QueryBuilder $queryBuilder, QueryNameGeneratorInterface $queryNameGenerator, string $resourceClass, string $operationName = null, array $context = [])
+    public function apply(QueryBuilder $queryBuilder, QueryNameGeneratorInterface $queryNameGenerator, string $resourceClass, ?string $operationName = null, array $context = [])
     {
 
         $contextCopy = (new \ArrayObject($context))->getArrayCopy();

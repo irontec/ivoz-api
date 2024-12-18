@@ -62,7 +62,7 @@ class EntityDenormalizer implements DenormalizerInterface
     /**
      * {@inheritdoc}
      */
-    public function supportsDenormalization($data, $type, string $format = null)
+    public function supportsDenormalization($data, $type, ?string $format = null)
     {
         return class_exists($type . 'Dto');
     }
@@ -72,7 +72,7 @@ class EntityDenormalizer implements DenormalizerInterface
      *
      * @throws InvalidArgumentException
      */
-    public function denormalize($data, $class, string $format = null, array $context = [])
+    public function denormalize($data, $class, ?string $format = null, array $context = [])
     {
         $data = $this->denormalizeDateTimes($data, $class);
 
@@ -146,7 +146,7 @@ class EntityDenormalizer implements DenormalizerInterface
         return $response;
     }
 
-    private function denormalizeEntity(array $input, string $class, EntityInterface $entity = null, string $normalizationContext)
+    private function denormalizeEntity(array $input, string $class, ?EntityInterface $entity, string $normalizationContext)
     {
         $propertyNameCollection = $this->propertyNameCollectionFactory->create(
             $class,
@@ -274,7 +274,7 @@ class EntityDenormalizer implements DenormalizerInterface
      * @param DataTransferObjectInterface $dto
      * @return EntityInterface
      */
-    private function mapToEntity(string $class, EntityInterface $entity = null, DataTransferObjectInterface $dto): EntityInterface
+    private function mapToEntity(string $class, ?EntityInterface $entity, DataTransferObjectInterface $dto): EntityInterface
     {
         if ($entity) {
             $this->updateEntityFromDto->execute(

@@ -24,10 +24,10 @@ class ExistsFilter extends BaseExistsFilter
         ManagerRegistry $managerRegistry,
         ResourceMetadataFactoryInterface $resourceMetadataFactory,
         ?RequestStack $requestStack,
-        LoggerInterface $logger = null,
-        array $properties = null,
+        ?LoggerInterface $logger = null,
+        ?array $properties = null,
         string $existsParameterName = self::QUERY_PARAMETER_KEY,
-        NameConverterInterface $nameConverter = null
+        ?NameConverterInterface $nameConverter = null
     ) {
         $this->resourceMetadataFactory = $resourceMetadataFactory;
         parent::__construct(
@@ -81,7 +81,7 @@ class ExistsFilter extends BaseExistsFilter
         QueryBuilder $queryBuilder,
         QueryNameGeneratorInterface $queryNameGenerator,
         string $resourceClass,
-        string $operationName = null,
+        ?string $operationName = null,
         array $context = []
     ) {
         $metadata = $this->resourceMetadataFactory->create($resourceClass);
