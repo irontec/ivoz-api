@@ -11,7 +11,7 @@ trait FilterTrait
      */
     protected $resourceMetadataFactory;
 
-    public function setProperties(array $properties = null)
+    public function setProperties(?array $properties = null)
     {
         $this->properties = $properties;
     }

@@ -26,9 +26,9 @@ class DateFilter extends BaseDateFilter
     public function __construct(
         ManagerRegistry $managerRegistry,
         ?RequestStack $requestStack,
-        LoggerInterface $logger = null,
-        array $properties = null,
-        NameConverterInterface $nameConverter = null,
+        ?LoggerInterface $logger,
+        ?array $properties,
+        ?NameConverterInterface $nameConverter,
         ResourceMetadataFactoryInterface $resourceMetadataFactory
     ) {
         $this->resourceMetadataFactory = $resourceMetadataFactory;
@@ -62,7 +62,7 @@ class DateFilter extends BaseDateFilter
         QueryBuilder $queryBuilder,
         QueryNameGeneratorInterface $queryNameGenerator,
         string $resourceClass,
-        string $operationName = null,
+        ?string $operationName = null,
         array $context = []
     ) {
         $metadata = $this->resourceMetadataFactory->create($resourceClass);
@@ -75,7 +75,7 @@ class DateFilter extends BaseDateFilter
      * @inherited
      * @see BaseDateFilter::addWhere
      */
-    protected function addWhere(QueryBuilder $queryBuilder, QueryNameGeneratorInterface $queryNameGenerator, string $alias, string $field, string $operator, $value, string $nullManagement = null, $type = null)
+    protected function addWhere(QueryBuilder $queryBuilder, QueryNameGeneratorInterface $queryNameGenerator, string $alias, string $field, string $operator, $value, ?string $nullManagement = null, $type = null)
     {
         if (is_array($value)) {
             foreach ($value as $key => $val) {

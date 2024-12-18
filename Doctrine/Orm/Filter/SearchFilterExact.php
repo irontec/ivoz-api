@@ -27,11 +27,11 @@ class SearchFilterExact extends SearchFilter
         \Symfony\Bridge\Doctrine\ManagerRegistry $managerRegistry,
         ?RequestStack $requestStack,
         IriConverterInterface $iriConverter,
-        PropertyAccessorInterface $propertyAccessor = null,
-        LoggerInterface $logger = null,
-        array $properties = null,
-        IdentifiersExtractorInterface $identifiersExtractor = null,
-        NameConverterInterface $nameConverter = null,
+        ?PropertyAccessorInterface $propertyAccessor,
+        ?LoggerInterface $logger,
+        ?array $properties,
+        ?IdentifiersExtractorInterface $identifiersExtractor,
+        ?NameConverterInterface $nameConverter,
         ResourceMetadataFactoryInterface $resourceMetadataFactory,
         private PropertyMetadataFactoryInterface $propertyMetadataFactory
     ) {
@@ -56,7 +56,7 @@ class SearchFilterExact extends SearchFilter
         return parent::getDescription($resourceClass, $addDefault);
     }
 
-    public function apply(QueryBuilder $queryBuilder, QueryNameGeneratorInterface $queryNameGenerator, string $resourceClass, string $operationName = null, array $context = [])
+    public function apply(QueryBuilder $queryBuilder, QueryNameGeneratorInterface $queryNameGenerator, string $resourceClass, ?string $operationName = null, array $context = [])
     {
         $contextCopy = (new \ArrayObject($context))->getArrayCopy();
         foreach ($contextCopy['filters'] as $field => $filters) {
@@ -122,7 +122,7 @@ class SearchFilterExact extends SearchFilter
         $value, QueryBuilder $queryBuilder,
         QueryNameGeneratorInterface $queryNameGenerator,
         string $resourceClass,
-        string $operationName = null
+        ?string $operationName = null
     ) {
         $this->resourceClass = $resourceClass;
         return parent::filterProperty(...func_get_args());

@@ -23,10 +23,10 @@ class RangeFilter extends BaseRangeFilter
     public function __construct(
         ManagerRegistry $managerRegistry,
         ?RequestStack $requestStack,
-        LoggerInterface $logger = null,
-        array $properties = null,
+        ?LoggerInterface $logger,
+        ?array $properties,
         ResourceMetadataFactoryInterface $resourceMetadataFactory,
-        NameConverterInterface $nameConverter = null
+        ?NameConverterInterface $nameConverter = null
     ) {
         $this->resourceMetadataFactory = $resourceMetadataFactory;
         parent::__construct(
@@ -58,7 +58,7 @@ class RangeFilter extends BaseRangeFilter
         QueryBuilder $queryBuilder,
         QueryNameGeneratorInterface $queryNameGenerator,
         string $resourceClass,
-        string $operationName = null,
+        ?string $operationName = null,
         array $context = []
     ) {
         $metadata = $this->resourceMetadataFactory->create($resourceClass);

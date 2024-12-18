@@ -30,7 +30,7 @@ class SecurityFilterExtension implements QueryCollectionExtensionInterface, Quer
         QueryNameGeneratorInterface $queryNameGenerator,
         string $resourceClass,
         array $identifiers,
-        string $operationName = null,
+        ?string $operationName = null,
         array $context = []
     ) {
         $dataAccessControl = $this->dataAccessControlParser->get();
@@ -51,7 +51,7 @@ class SecurityFilterExtension implements QueryCollectionExtensionInterface, Quer
         QueryBuilder $queryBuilder,
         QueryNameGeneratorInterface $queryNameGenerator,
         string $resourceClass,
-        string $operationName = null
+        ?string $operationName = null
     ) {
         $dataAccessControl = $this->dataAccessControlParser->get();
 

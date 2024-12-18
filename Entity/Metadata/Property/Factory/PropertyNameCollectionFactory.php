@@ -30,7 +30,7 @@ class PropertyNameCollectionFactory implements PropertyNameCollectionFactoryInte
         PropertyMetadataFactoryInterface $propertyMetadataFactory,
         ResourceNameCollectionFactoryInterface $resourceNameCollectionFactory,
         TokenStorageInterface $tokenStorage,
-        string $defaultRole = null
+        ?string $defaultRole = null
     ) {
         $this->propertyMetadataFactory = $propertyMetadataFactory;
         $this->tokenStorage = $tokenStorage;
@@ -43,10 +43,10 @@ class PropertyNameCollectionFactory implements PropertyNameCollectionFactoryInte
         }
 
         $this->dummyNormalizer = new class implements NormalizerInterface, SerializerInterface {
-            public function supportsNormalization($data, string $format = null) {
+            public function supportsNormalization($data, ?string $format = null) {
                 return true;
             }
-            public function normalize($object, string $format = null, array $context = []) { return null; }
+            public function normalize($object, ?string $format = null, array $context = []) { return null; }
             public function serialize($data, string $format, array $context = []) { return ''; }
             public function deserialize($data, string $type, string $format, array $context = []) { return null; }
         };

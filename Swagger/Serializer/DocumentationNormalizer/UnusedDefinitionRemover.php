@@ -31,7 +31,7 @@ class UnusedDefinitionRemover implements NormalizerInterface, CacheableSupportsM
     /**
      * {@inheritdoc}
      */
-    public function supportsNormalization($data, string $format = null)
+    public function supportsNormalization($data, ?string $format = null)
     {
         return $this->decoratedNormalizer->supportsNormalization(...func_get_args());
     }
@@ -39,7 +39,7 @@ class UnusedDefinitionRemover implements NormalizerInterface, CacheableSupportsM
     /**
      * {@inheritdoc}
      */
-    public function normalize($object, string $format = null, array $context = [])
+    public function normalize($object, ?string $format = null, array $context = [])
     {
         $response = $this->decoratedNormalizer->normalize(...func_get_args());
         $usedDefinitions = $this->getUsedDefinitions($response);

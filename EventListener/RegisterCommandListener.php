@@ -77,8 +77,8 @@ final class RegisterCommandListener
 
     private function triggerEvent(
         array $params,
-        array $body = null,
-        EntityInterface $user = null
+        ?array $body = null,
+        ?EntityInterface $user = null
     ) {
 
         $resourceClass = $params['_api_resource_class'] ?? '';

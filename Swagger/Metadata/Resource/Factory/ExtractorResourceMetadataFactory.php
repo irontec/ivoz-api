@@ -41,7 +41,7 @@ class ExtractorResourceMetadataFactory implements ResourceMetadataFactoryInterfa
      *
      * @return ResourceMetadata
      */
-    private function handleNotFound(ResourceMetadata $parentPropertyMetadata = null, string $resourceClass): ResourceMetadata
+    private function handleNotFound(?ResourceMetadata $parentPropertyMetadata, string $resourceClass): ResourceMetadata
     {
         if (null !== $parentPropertyMetadata) {
             return $parentPropertyMetadata;

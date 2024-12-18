@@ -36,7 +36,7 @@ class TimezoneSelectorDecorator implements NormalizerInterface, CacheableSupport
     /**
      * {@inheritdoc}
      */
-    public function supportsNormalization($data, string $format = null)
+    public function supportsNormalization($data, ?string $format = null)
     {
         return $this->decoratedNormalizer->supportsNormalization(...func_get_args());
     }
@@ -44,7 +44,7 @@ class TimezoneSelectorDecorator implements NormalizerInterface, CacheableSupport
     /**
      * {@inheritdoc}
      */
-    public function normalize($object, string $format = null, array $context = [])
+    public function normalize($object, ?string $format = null, array $context = [])
     {
         $response = $this->decoratedNormalizer->normalize(...func_get_args());
         $this->definitions = $response['definitions'];

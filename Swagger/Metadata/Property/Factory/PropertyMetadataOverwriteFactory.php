@@ -28,7 +28,7 @@ class PropertyMetadataOverwriteFactory implements PropertyMetadataFactoryInterfa
      * @param Reader $reader
      */
     public function __construct(
-        PropertyMetadataFactoryInterface $decorated = null,
+        ?PropertyMetadataFactoryInterface $decorated,
         Reader $reader
     ) {
         $this->decorated = $decorated;
