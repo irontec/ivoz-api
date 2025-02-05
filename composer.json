@@ -16,6 +16,14 @@
         {
             "name": "Mikel Madariaga",
             "email": "mikel@irontec.com"
+        },
+        {
+            "name": "Daniel García",
+            "email": "dgarcia@irontec.com"
+        },
+        {
+            "name": "Roger Batista",
+            "email": "rbatista@irontec.com"
         }
     ],
     "autoload": {
