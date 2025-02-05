@@ -60,6 +60,11 @@ class ReferenceFixerDecorator implements NormalizerInterface, CacheableSupportsM
 
         $definitionSegments = explode('/definitions/', $resourceName);
         $definition = array_pop($definitionSegments);
+
+        if (!isset($definitions[$definition]['properties'])) {
+            return false;
+        }
+
         $properties = $definitions[$definition]['properties'];
 
         if (isset($properties['id'])) {
