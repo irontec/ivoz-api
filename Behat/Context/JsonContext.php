@@ -24,6 +24,8 @@ class JsonContext extends BaseContext implements Context, SnippetAcceptingContex
     protected $httpCallResultPool;
     protected $inspector;
 
+    protected ?array $fixedExpectation = null;
+
     /**
      * Initializes context.
      *
@@ -40,6 +42,15 @@ class JsonContext extends BaseContext implements Context, SnippetAcceptingContex
         $this->inspector = new JsonInspector(
             'javascript'
         );
+    }
+
+    public function getFixedResult(): ?string
+    {
+        if ($this->fixedExpectation !== null) {
+            return json_encode($this->fixedExpectation);
+        }
+
+        return $this->httpCallResultPool->getResult()->getValue();
     }
 
     /**
@@ -95,7 +106,7 @@ class JsonContext extends BaseContext implements Context, SnippetAcceptingContex
         $actual = new Json(
             $this->getStreamedResponseContent()
         );
-        $message = "the response was \n\"\"\"\n" . $actual->encode() ."\"\"\"";
+        $message = "the response was \n\"\"\"\n" . $actual->encode() . "\"\"\"";
 
         $this->assert(
             $expected == $actual,
@@ -122,6 +133,11 @@ class JsonContext extends BaseContext implements Context, SnippetAcceptingContex
                 $actual->getContent()
             );
         } catch (\Exception $e) {
+            $this->fixedExpectation = $this->buildFixedAlikeExpectation(
+                $actual->getContent(),
+                $expected->getContent(),
+            );
+
             $this->assert(
                 false,
                 "The json is equal to:\n" . $actual->encode() . "\nbut\n" . $e->getMessage()
@@ -149,7 +165,7 @@ class JsonContext extends BaseContext implements Context, SnippetAcceptingContex
 
         $this->assert(
             strpos($actualDetail, $expectedDetail) !== false,
-            'Expected message to contain "' . $expectedDetail . '", got "' . $actualDetail . '"'
+            'Exception message does not match: ' . $actualDetail
         );
     }
 
@@ -174,7 +190,7 @@ class JsonContext extends BaseContext implements Context, SnippetAcceptingContex
         }
 
         if (is_array($expected)) {
-            $allowOmittedExpectations = $this->allowOmittedFields($expected);
+            $allowOmittedExpectations = $this->allowOmmitedFields($expected);
 
             if ($allowOmittedExpectations) {
                 unset($expected['*']);
@@ -218,7 +234,11 @@ class JsonContext extends BaseContext implements Context, SnippetAcceptingContex
 
         if ($matchingRules) {
             [, $matcher, $value] = $matches;
-            $this->applyMatcher($matcher, $value, $actual);
+
+            try {
+                $this->applyMatcher($matcher, $value, $actual);
+            } catch (ExpectationException $e) {
+            }
 
             return;
         } elseif ($expected !== '~') {
@@ -268,7 +288,7 @@ class JsonContext extends BaseContext implements Context, SnippetAcceptingContex
         }
     }
 
-    private function allowOmittedFields(array $expected): bool
+    private function allowOmmitedFields($expected): bool
     {
         $lastKey = array_key_last(
             $expected,
@@ -315,5 +335,60 @@ class JsonContext extends BaseContext implements Context, SnippetAcceptingContex
             default:
                 throw new RuntimeException('Unknown matcher type ' . $matcher);
         }
+    }
+
+    private function buildFixedAlikeExpectation($actual, $expected)
+    {
+        if ($expected instanceof \stdClass) {
+            $expected = get_object_vars($expected);
+            $actual = get_object_vars($actual);
+        }
+
+        if (is_array($actual)) {
+            $allowOmmitedFields = $this->allowOmmitedFields($expected);
+
+            $missedExpectations = array_diff(
+                array_keys($expected),
+                array_keys($actual),
+            );
+
+            $result = array_filter(
+                $expected,
+                fn ($e) => !in_array($e, $missedExpectations),
+                ARRAY_FILTER_USE_KEY,
+            );
+
+
+            foreach ($actual as $key => $value) {
+                $skipField = $allowOmmitedFields && !array_key_exists($key, $expected);
+
+                if (!$skipField) {
+                    $result[$key] = $this->buildFixedAlikeExpectation($value, $expected[$key] ?? null);
+                }
+            }
+
+            return $result;
+        }
+
+        if ($expected === '~') {
+            return '~';
+        }
+
+        if ($expected === $actual) {
+            return $expected;
+        }
+
+        if (is_string($expected) && preg_match('/match:(\w+)\((.+)\)/', $expected, $matches)) {
+            [, $matcher, $value] = $matches;
+
+            try {
+                $this->applyMatcher($matcher, $value, $actual);
+            } catch (ExpectationException $e) {
+                return $actual;
+            }
+            return $expected;
+        }
+
+        return $actual;
     }
 }
