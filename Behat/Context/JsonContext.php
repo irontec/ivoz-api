@@ -113,7 +113,7 @@ class JsonContext extends BaseContext implements Context, SnippetAcceptingContex
         try {
             $expected = new Json($content);
         } catch (\Exception $e) {
-            throw new \Exception('The expected JSON is not a valid', $e->getCode(), $e);
+            throw new \Exception('The expected JSON is not valid', $e->getCode(), $e);
         }
 
         try {
@@ -124,9 +124,33 @@ class JsonContext extends BaseContext implements Context, SnippetAcceptingContex
         } catch (\Exception $e) {
             $this->assert(
                 false,
-                "The json is equal to:\n". $actual->encode() . "\nbut\n" . $e->getMessage()
+                "The json is equal to:\n" . $actual->encode() . "\nbut\n" . $e->getMessage()
             );
         }
+    }
+
+    /**
+     * @Then the exception should match:
+     */
+    public function theExceptionMessageShouldMatch(PyStringNode $content)
+    {
+        $actual = new Json($this->httpCallResultPool->getResult()->getValue());
+        $actualContent = $actual->getContent();
+        $expected = new Json($content);
+        $expectedContent = $expected->getContent();
+
+        $expectedDetail = is_object($expectedContent) && isset($expectedContent->detail)
+            ? $expectedContent->detail
+            : (string)$expectedContent;
+
+        $actualDetail = isset($actualContent->detail)
+            ? $actualContent->detail
+            : (string)$actualContent;
+
+        $this->assert(
+            strpos($actualDetail, $expectedDetail) !== false,
+            'Expected message to contain "' . $expectedDetail . '", got "' . $actualDetail . '"'
+        );
     }
 
     private function getJson()
@@ -150,15 +174,21 @@ class JsonContext extends BaseContext implements Context, SnippetAcceptingContex
         }
 
         if (is_array($expected)) {
-            $keyDivergence = array_diff(
-                array_keys($expected),
-                array_keys($actual)
+            $allowOmittedExpectations = $this->allowOmittedFields($expected);
+
+            if ($allowOmittedExpectations) {
+                unset($expected['*']);
+            }
+
+            $this->assertAllExpectedFieldsPresent(
+                $actual,
+                $expected,
             );
 
-            if (!empty($keyDivergence)) {
-                $this->assert(
-                    false,
-                    "Object attributes are not equal: " . implode(', ', $keyDivergence)
+            if (!$allowOmittedExpectations) {
+                $this->assertAllActualFieldsExpected(
+                    $actual,
+                    $expected,
                 );
             }
 
@@ -170,7 +200,7 @@ class JsonContext extends BaseContext implements Context, SnippetAcceptingContex
                     );
                 }
 
-                if($value === "~"){
+                if ($value === "~") {
                     continue;
                 }
 
@@ -191,7 +221,6 @@ class JsonContext extends BaseContext implements Context, SnippetAcceptingContex
             $this->applyMatcher($matcher, $value, $actual);
 
             return;
-
         } elseif ($expected !== '~') {
             $this->assert(
                 $expected === $actual,
@@ -209,9 +238,50 @@ class JsonContext extends BaseContext implements Context, SnippetAcceptingContex
         }
     }
 
+    private function assertAllExpectedFieldsPresent(array $actual, array $expected): void
+    {
+        $missingExpectedKeys = array_diff_key(
+            $expected,
+            $actual,
+        );
+
+        if (!empty($missingExpectedKeys)) {
+            $this->assert(
+                false,
+                "Missing expected attributes: " . implode(', ', array_keys($missingExpectedKeys))
+            );
+        }
+    }
+
+    private function assertAllActualFieldsExpected(array $actual, array $expected): void
+    {
+        $missingExpectations = array_diff_key(
+            $actual,
+            $expected,
+        );
+
+        if (!empty($missingExpectations)) {
+            $this->assert(
+                false,
+                "Missing expectation for attributes: " . implode(', ', array_keys($missingExpectations))
+            );
+        }
+    }
+
+    private function allowOmittedFields(array $expected): bool
+    {
+        $lastKey = array_key_last(
+            $expected,
+        );
+
+        return
+            $lastKey === '*'
+            && $expected['*'] === '~';
+    }
+
     private function applyMatcher(string $matcher, $expected, $actual)
     {
-        switch($matcher) {
+        switch ($matcher) {
             case 'type':
 
                 $actualType = gettype($actual);
