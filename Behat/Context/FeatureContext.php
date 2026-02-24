@@ -41,6 +41,13 @@ class FeatureContext extends RawMinkContext implements Context, SnippetAccepting
 
     protected static $tokenCache = [];
 
+    private string $filesPath;
+
+    /**
+     * @var array<string, array{path: string, mimeType: string, filename: string}>
+     */
+    private array $filesToAttach = [];
+
     /**
      * Initializes context.
      *
@@ -59,6 +66,7 @@ class FeatureContext extends RawMinkContext implements Context, SnippetAccepting
         $this->administratorRepository = $container->get(
             $container->getParameter('behat.feature_context.admin_repository')
         );
+        $this->filesPath = $container->getParameter('behat.feature_context.files_path');
     }
 
     /**
@@ -94,24 +102,84 @@ class FeatureContext extends RawMinkContext implements Context, SnippetAccepting
     }
 
     /**
+     * @Given I attach :filename to :fieldName with :mimeType
+     */
+    public function iAttachFileTo(string $filename, string $fieldName, string $mimeType): void
+    {
+        $filePath = $this->filesPath . '/' . $filename;
+
+        if (!file_exists($filePath)) {
+            throw new \Exception("File not found: $filePath");
+        }
+
+        $this->filesToAttach[$fieldName] = [
+            'path' => $filePath,
+            'mimeType' => $mimeType,
+            'filename' => $filename,
+        ];
+    }
+
+    /**
      * @When I send a :method multipart request to :url with body:
      */
     public function iSendAMultipartRequestTo($method, $url, ?PyStringNode $body = null, $files = [])
     {
-        if ($body !== null) {
-            $body = implode(
-                "\r\n",
-                $body->getStrings()
+        if (empty($this->filesToAttach)) {
+            if ($body !== null) {
+                $body = implode(
+                    "\r\n",
+                    $body->getStrings()
+                );
+            }
+
+            return $this->request->send(
+                $method,
+                $this->locatePath($url),
+                [],
+                $files,
+                $body
             );
         }
 
-        return $this->request->send(
+        $boundary = '----IvozApiFormBoundary' . uniqid();
+        $multipartBody = '';
+
+        if ($body !== null) {
+            $bodyContent = implode("\r\n", $body->getStrings());
+            $multipartBody .= "--{$boundary}\r\n";
+            $multipartBody .= "Content-Disposition: form-data; name=\"body\"\r\n\r\n";
+            $multipartBody .= $bodyContent . "\r\n";
+        }
+
+        foreach ($this->filesToAttach as $fieldName => $fileInfo) {
+            $fileContent = file_get_contents($fileInfo['path']);
+            $multipartBody .= "--{$boundary}\r\n";
+            $multipartBody .= "Content-Disposition: form-data; name=\"{$fieldName}\"; filename=\"{$fileInfo['filename']}\"\r\n";
+            $multipartBody .= "Content-Type: {$fileInfo['mimeType']}\r\n\r\n";
+            $multipartBody .= $fileContent . "\r\n";
+        }
+
+        $multipartBody .= "--{$boundary}--\r\n";
+
+        $this->filesToAttach = [];
+
+        $client = $this->getSession()->getDriver()->getClient();
+        $client->request(
             $method,
             $this->locatePath($url),
             [],
-            $files,
-            $body
+            [],
+            ['CONTENT_TYPE' => "multipart/form-data; boundary={$boundary}"],
+            $multipartBody
         );
+    }
+
+    /**
+     * @AfterScenario
+     */
+    public function clearFilesToAttach(): void
+    {
+        $this->filesToAttach = [];
     }
 
     /**
