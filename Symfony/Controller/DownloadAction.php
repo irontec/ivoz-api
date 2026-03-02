@@ -122,7 +122,8 @@ class DownloadAction
 
         $disposition = $response->headers->makeDisposition(
             $forceDownload ? ResponseHeaderBag::DISPOSITION_ATTACHMENT : ResponseHeaderBag::DISPOSITION_INLINE,
-            $this->sanitizeFileName($fileName)
+            $this->sanitizeFileName($fileName),
+            $this->buildFilenameFallback($fileName)
         );
         $response->headers->set('Content-Disposition', $disposition);
         $response->headers->set('Content-Type', $mimeType ?: 'application/octet-stream');
@@ -137,5 +138,15 @@ class DownloadAction
             '_',
             $fileName
         );
+    }
+
+    private function buildFilenameFallback(string $fileName): string
+    {
+        $hash = md5($fileName);
+
+        preg_match('/\.([a-zA-Z0-9]+)$/', $fileName, $matches);
+        $fileExtension = $matches[0] ?? '';
+
+        return $hash . $fileExtension;
     }
 }
