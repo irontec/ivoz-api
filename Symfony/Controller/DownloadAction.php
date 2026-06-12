@@ -134,7 +134,7 @@ class DownloadAction
     private function sanitizeFileName(string $fileName): string
     {
         return str_replace(
-            ' ',
+            ['/', '\\'],
             '_',
             $fileName
         );
@@ -142,6 +142,11 @@ class DownloadAction
 
     private function buildFilenameFallback(string $fileName): string
     {
+        $isAscii = preg_match('/^[\x20-\x7e]*$/', $fileName);
+        if ($isAscii) {
+            return str_replace(['\\', '/', '%'], '_', $fileName);
+        }
+
         $hash = md5($fileName);
 
         preg_match('/\.([a-zA-Z0-9]+)$/', $fileName, $matches);
