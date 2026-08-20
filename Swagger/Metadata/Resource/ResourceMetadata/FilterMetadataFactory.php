@@ -8,6 +8,7 @@ use ApiPlatform\Core\Metadata\Resource\ResourceMetadata;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Mapping\ClassMetadataInfo;
 use Ivoz\Api\Doctrine\Orm\Filter\BooleanFilter;
+use Ivoz\Api\Doctrine\Orm\Filter\CollectionFilter;
 use Ivoz\Api\Doctrine\Orm\Filter\DateFilter;
 use Ivoz\Api\Doctrine\Orm\Filter\ExistsFilter;
 use Ivoz\Api\Doctrine\Orm\Filter\NotEqualFilter;
@@ -63,6 +64,12 @@ class FilterMetadataFactory implements ResourceMetadataFactoryInterface
 
         $attributes = $resourceMetadata->getAttributes();
         $filters = $this->getEntityFilters($resourceClass, $resourceMetadata);
+
+        $collectionFilters = $this->getCollectionFilters($resourceClass, $attributes);
+        if (!empty($collectionFilters)) {
+            $filters[CollectionFilter::SERVICE_NAME] = $collectionFilters;
+        }
+
         if (!empty($filters)) {
             $attributes['filters'] = array_keys($filters);
             $attributes['filters'][] = 'ivoz.api.filter.property_filter';
@@ -70,6 +77,201 @@ class FilterMetadataFactory implements ResourceMetadataFactoryInterface
         }
 
         return $resourceMetadata->withAttributes($attributes);
+    }
+
+    /**
+     * Reads the per-resource `collectionFilters` declaration, which maps a logical
+     * filter name to the to-many doctrine path it resolves to.
+     *
+     * @param array<string, mixed>|null $attributes
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    private function getCollectionFilters(string $resourceClass, ?array $attributes): array
+    {
+        $declaration = $attributes['collectionFilters'] ?? null;
+        if (!is_array($declaration)) {
+            return [];
+        }
+
+        $response = [];
+        foreach ($declaration as $name => $config) {
+            if (!is_array($config) || !isset($config['path'])) {
+                throw new \DomainException(
+                    sprintf(
+                        'Collection filter "%s" of %s must declare a "path".',
+                        $name,
+                        $resourceClass
+                    )
+                );
+            }
+
+            $this->assertToManyPath($resourceClass, (string) $name, (string) $config['path']);
+
+            $strategies = $config['strategies'] ?? CollectionFilter::STRATEGIES;
+            $unknown = array_diff($strategies, CollectionFilter::STRATEGIES);
+            if (!empty($unknown)) {
+                throw new \DomainException(
+                    sprintf(
+                        'Collection filter "%s" of %s declares unknown strategies: %s. Valid ones are: %s.',
+                        $name,
+                        $resourceClass,
+                        implode(', ', $unknown),
+                        implode(', ', CollectionFilter::STRATEGIES)
+                    )
+                );
+            }
+
+            if (in_array(CollectionFilter::STRATEGY_ONLY, $strategies, true)) {
+                $this->assertNotNullableTarget(
+                    $resourceClass,
+                    (string) $name,
+                    (string) $config['path']
+                );
+            }
+
+            $response[$name] = [
+                'path' => $config['path'],
+                'strategies' => array_values($strategies),
+            ];
+        }
+
+        return $response;
+    }
+
+    /**
+     * The `only` strategy rules out extra rows with `NOT IN`, and a NULL never
+     * matches `NOT IN`, so a nullable target would let rows carrying NULL slip
+     * through unnoticed and report a wider set as an exact match.
+     */
+    private function assertNotNullableTarget(string $resourceClass, string $name, string $path): void
+    {
+        $manager = $this->managerRegistry->getManagerForClass($resourceClass);
+        if (!$manager) {
+            return;
+        }
+
+        [$associationName, $field] = explode('.', $path);
+
+        /** @var ClassMetadata $metadata */
+        $metadata = $manager->getClassMetadata($resourceClass);
+        $association = $metadata->getAssociationMapping($associationName);
+
+        /** @var ClassMetadata $targetMetadata */
+        $targetMetadata = $manager->getClassMetadata($association['targetEntity']);
+
+        if ($targetMetadata->hasAssociation($field)) {
+            $mapping = $targetMetadata->getAssociationMapping($field);
+            $nullable = $mapping['joinColumns'][0]['nullable'] ?? true;
+        } else {
+            $mapping = $targetMetadata->getFieldMapping($field);
+            $nullable = $mapping['nullable'] ?? false;
+        }
+
+        if (!$nullable) {
+            return;
+        }
+
+        throw new \DomainException(
+            sprintf(
+                'Collection filter "%s" of %s declares the "%s" strategy over path "%s", but '
+                . '"%s" is nullable. Rows holding NULL there could not be told apart from '
+                . 'absent ones, so an exact match cannot be guaranteed.',
+                $name,
+                $resourceClass,
+                CollectionFilter::STRATEGY_ONLY,
+                $path,
+                $field
+            )
+        );
+    }
+
+    /**
+     * Fails fast on a mistyped path, so it surfaces on cache warmup instead of on
+     * the first request that happens to use the filter.
+     */
+    private function assertToManyPath(string $resourceClass, string $name, string $path): void
+    {
+        $segments = explode('.', $path);
+        if (count($segments) !== 2) {
+            throw new \DomainException(
+                sprintf(
+                    'Collection filter "%s" of %s declares path "%s", expected "<association>.<field>".',
+                    $name,
+                    $resourceClass,
+                    $path
+                )
+            );
+        }
+
+        [$associationName, $field] = $segments;
+
+        $manager = $this->managerRegistry->getManagerForClass($resourceClass);
+        if (!$manager) {
+            return;
+        }
+
+        /** @var ClassMetadata $metadata */
+        $metadata = $manager->getClassMetadata($resourceClass);
+
+        if (!$metadata->hasAssociation($associationName)) {
+            throw new \DomainException(
+                sprintf(
+                    'Collection filter "%s" of %s declares path "%s", but "%s" is not an association.',
+                    $name,
+                    $resourceClass,
+                    $path,
+                    $associationName
+                )
+            );
+        }
+
+        $association = $metadata->getAssociationMapping($associationName);
+        $isToMany = in_array(
+            $association['type'],
+            [ClassMetadataInfo::ONE_TO_MANY, ClassMetadataInfo::MANY_TO_MANY],
+            true
+        );
+
+        if (!$isToMany) {
+            throw new \DomainException(
+                sprintf(
+                    'Collection filter "%s" of %s declares path "%s", but "%s" is not a to-many '
+                    . 'association. Regular associations are already filterable.',
+                    $name,
+                    $resourceClass,
+                    $path,
+                    $associationName
+                )
+            );
+        }
+
+        if (empty($association['mappedBy'])) {
+            throw new \DomainException(
+                sprintf(
+                    'Collection filter "%s" of %s declares path "%s", but "%s" is not mapped by '
+                    . 'the related entity. Only the inverse side of a to-many association is supported.',
+                    $name,
+                    $resourceClass,
+                    $path,
+                    $associationName
+                )
+            );
+        }
+
+        $targetMetadata = $manager->getClassMetadata($association['targetEntity']);
+        if (!$targetMetadata->hasField($field) && !$targetMetadata->hasAssociation($field)) {
+            throw new \DomainException(
+                sprintf(
+                    'Collection filter "%s" of %s declares path "%s", but "%s" has no "%s" property.',
+                    $name,
+                    $resourceClass,
+                    $path,
+                    $association['targetEntity'],
+                    $field
+                )
+            );
+        }
     }
 
     private function getEntityFilters(string $resourceClass, ResourceMetadata $resourceMetadata)

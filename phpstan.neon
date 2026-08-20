@@ -13,6 +13,11 @@ parameters:
         -
             message: "#^Deprecated in PHP 8\\.1\\: Required parameter \\$resourceMetadataFactory follows optional parameter \\$nameConverter\\.$#"
             count: 1
+            path: Doctrine/Orm/Filter/CollectionFilter.php
+
+        -
+            message: "#^Deprecated in PHP 8\\.1\\: Required parameter \\$resourceMetadataFactory follows optional parameter \\$nameConverter\\.$#"
+            count: 1
             path: Doctrine/Orm/Filter/DateFilter.php
 
         -
