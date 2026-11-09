@@ -2,7 +2,7 @@
 
 namespace Ivoz\Api\Symfony\EventListener;
 
-use ApiPlatform\Core\Util\ErrorFormatGuesser;
+use ApiPlatform\Util\ErrorFormatGuesser;
 use Assert\InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Response;

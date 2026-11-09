@@ -5,7 +5,7 @@ namespace Ivoz\Api\JsonLd\Serializer\Normalizer;
 use ApiPlatform\Core\Api\IriConverterInterface;
 use ApiPlatform\Core\Api\ResourceClassResolverInterface;
 use ApiPlatform\Core\JsonLd\ContextBuilderInterface;
-use ApiPlatform\Core\JsonLd\Serializer\JsonLdContextTrait;
+use ApiPlatform\JsonLd\Serializer\JsonLdContextTrait;
 use ApiPlatform\Core\Metadata\Resource\Factory\ResourceMetadataFactoryInterface;
 use ApiPlatform\Core\Metadata\Resource\ResourceMetadata;
 use Ivoz\Api\Entity\Metadata\Property\Factory\PropertyNameCollectionFactory;
@@ -17,7 +17,7 @@ use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInt
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 /**
- * Based on ApiPlatform\Core\JsonLd\Serializer\ItemNormalizer
+ * Based on ApiPlatform\JsonLd\Serializer\ItemNormalizer
  */
 class EntityNormalizer extends JsonEntityNormalizer implements NormalizerInterface
 {

@@ -2,8 +2,8 @@
 
 namespace Ivoz\Api\Operation;
 
-use ApiPlatform\Core\EventListener\EventPriorities;
-use ApiPlatform\Core\Exception\ResourceClassNotFoundException;
+use ApiPlatform\Symfony\EventListener\EventPriorities;
+use ApiPlatform\Exception\ResourceClassNotFoundException;
 use Lexik\Bundle\JWTAuthenticationBundle\Event\JWTCreatedEvent;
 use Lexik\Bundle\JWTAuthenticationBundle\Events;
 use Lexik\Bundle\JWTAuthenticationBundle\Security\Authentication\Token\JWTUserToken;

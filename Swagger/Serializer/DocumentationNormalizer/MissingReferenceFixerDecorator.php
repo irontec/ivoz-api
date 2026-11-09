@@ -3,7 +3,7 @@
 namespace Ivoz\Api\Swagger\Serializer\DocumentationNormalizer;
 
 use ApiPlatform\Core\Api\ResourceClassResolverInterface;
-use ApiPlatform\Core\Documentation\Documentation;
+use ApiPlatform\Documentation\Documentation;
 use ApiPlatform\Core\Metadata\Property\Factory\PropertyMetadataFactoryInterface;
 use ApiPlatform\Core\Metadata\Property\Factory\PropertyNameCollectionFactoryInterface;
 use ApiPlatform\Core\Metadata\Property\PropertyMetadata;
@@ -249,7 +249,7 @@ class MissingReferenceFixerDecorator implements NormalizerInterface, CacheableSu
      *
      * @return array
      */
-    private function getType(string $type, bool $isCollection, ?string $className = null, ?bool $readableLink = null, \ArrayObject $definitions, ?array $serializerContext = null): array
+    private function getType(string $type, bool $isCollection, ?string $className, ?bool $readableLink, \ArrayObject $definitions, ?array $serializerContext = null): array
     {
         if ($isCollection) {
             return ['type' => 'array', 'items' => $this->getType($type, false, $className, $readableLink, $definitions, $serializerContext)];

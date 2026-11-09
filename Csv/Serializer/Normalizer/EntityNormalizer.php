@@ -6,7 +6,7 @@ use Ivoz\Api\Json\Serializer\Normalizer\EntityNormalizer as JsonEntityNormalizer
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 /**
- * Based on ApiPlatform\Core\JsonLd\Serializer\ItemNormalizer
+ * Based on ApiPlatform\JsonLd\Serializer\ItemNormalizer
  */
 class EntityNormalizer extends JsonEntityNormalizer implements NormalizerInterface
 {

@@ -15,7 +15,7 @@ use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInt
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 /**
- * Based on ApiPlatform\Core\JsonLd\Serializer\ItemNormalizer
+ * Based on ApiPlatform\JsonLd\Serializer\ItemNormalizer
  */
 class EntityNormalizer implements NormalizerInterface
 {
