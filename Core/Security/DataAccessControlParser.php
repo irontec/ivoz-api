@@ -2,9 +2,9 @@
 
 namespace Ivoz\Api\Core\Security;
 
-use ApiPlatform\Core\Exception\ResourceClassNotFoundException;
+use ApiPlatform\Exception\ResourceClassNotFoundException;
 use ApiPlatform\Core\Metadata\Resource\Factory\ResourceMetadataFactoryInterface;
-use ApiPlatform\Core\Util\RequestAttributesExtractor;
+use ApiPlatform\Util\RequestAttributesExtractor;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\Persistence\ObjectRepository;
 use Ivoz\Core\Infrastructure\Persistence\Doctrine\Model\Helper\CriteriaHelper;

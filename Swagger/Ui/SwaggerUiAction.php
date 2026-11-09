@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Ivoz\Api\Swagger\Ui;
 
-use ApiPlatform\Core\Documentation\Documentation;
-use ApiPlatform\Core\Exception\RuntimeException;
+use ApiPlatform\Documentation\Documentation;
+use ApiPlatform\Exception\RuntimeException;
 use ApiPlatform\Core\Metadata\Resource\Factory\ResourceMetadataFactoryInterface;
 use ApiPlatform\Core\Metadata\Resource\Factory\ResourceNameCollectionFactoryInterface;
 use Symfony\Component\HttpFoundation\Request;

@@ -2,9 +2,9 @@
 
 namespace Ivoz\Api\Entity\Serializer\Normalizer;
 
-use ApiPlatform\Core\Exception\InvalidArgumentException;
+use ApiPlatform\Exception\InvalidArgumentException;
 use ApiPlatform\Core\Metadata\Property\Factory\PropertyMetadataFactoryInterface;
-use ApiPlatform\Core\Metadata\Property\PropertyNameCollection;
+use ApiPlatform\Metadata\Property\PropertyNameCollection;
 use Doctrine\DBAL\Query\Expression\CompositeExpression;
 use Ivoz\Api\Core\Security\DataAccessControlParser;
 use Ivoz\Api\Entity\Metadata\Property\Factory\PropertyNameCollectionFactory;
@@ -20,7 +20,7 @@ use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInt
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 
 /**
- * Based on ApiPlatform\Core\JsonLd\Serializer\ItemNormalizer
+ * Based on ApiPlatform\JsonLd\Serializer\ItemNormalizer
  */
 class EntityDenormalizer implements DenormalizerInterface
 {
@@ -310,7 +310,7 @@ class EntityDenormalizer implements DenormalizerInterface
     }
 
     /**
-     * @throws \ApiPlatform\Core\Exception\PropertyNotFoundException
+     * @throws \ApiPlatform\Exception\PropertyNotFoundException
      */
     private function filterReadOnlyProperties(string $class, array $input): array
     {

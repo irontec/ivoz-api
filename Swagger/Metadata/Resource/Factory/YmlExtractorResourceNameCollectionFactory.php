@@ -3,7 +3,7 @@
 namespace Ivoz\Api\Swagger\Metadata\Resource\Factory;
 
 use ApiPlatform\Core\Metadata\Resource\Factory\ResourceNameCollectionFactoryInterface;
-use ApiPlatform\Core\Metadata\Resource\ResourceNameCollection;
+use ApiPlatform\Metadata\Resource\ResourceNameCollection;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Yaml\Yaml;
 

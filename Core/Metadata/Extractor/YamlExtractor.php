@@ -2,9 +2,9 @@
 
 namespace Ivoz\Api\Core\Metadata\Extractor;
 
-use ApiPlatform\Core\Exception\InvalidArgumentException;
-use ApiPlatform\Core\Exception\RuntimeException;
-use ApiPlatform\Core\Metadata\Extractor\AbstractExtractor;
+use ApiPlatform\Exception\InvalidArgumentException;
+use ApiPlatform\Exception\RuntimeException;
+use ApiPlatform\Metadata\Extractor\AbstractResourceExtractor;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
@@ -12,7 +12,7 @@ use Symfony\Component\Yaml\Yaml;
 /**
  * Based on ApiPlatform\Core\Metadata\Extractor\YamlExtractor
  */
-class YamlExtractor extends AbstractExtractor
+class YamlExtractor extends AbstractResourceExtractor
 {
     /**
      * @param string[] $paths

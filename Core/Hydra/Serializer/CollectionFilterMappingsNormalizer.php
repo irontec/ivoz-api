@@ -3,7 +3,7 @@
 namespace Ivoz\Api\Core\Hydra\Serializer;
 
 use ApiPlatform\Core\Api\FilterLocatorTrait;
-use ApiPlatform\Core\JsonLd\Serializer\JsonLdContextTrait;
+use ApiPlatform\JsonLd\Serializer\JsonLdContextTrait;
 use Symfony\Component\Serializer\Normalizer\NormalizerAwareInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
