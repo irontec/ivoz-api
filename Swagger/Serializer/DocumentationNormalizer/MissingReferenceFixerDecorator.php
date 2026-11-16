@@ -249,7 +249,7 @@ class MissingReferenceFixerDecorator implements NormalizerInterface, CacheableSu
      *
      * @return array
      */
-    private function getType(string $type, bool $isCollection, ?string $className = null, ?bool $readableLink = null, \ArrayObject $definitions, ?array $serializerContext = null): array
+    private function getType(string $type, bool $isCollection, ?string $className, ?bool $readableLink, \ArrayObject $definitions, ?array $serializerContext): array
     {
         if ($isCollection) {
             return ['type' => 'array', 'items' => $this->getType($type, false, $className, $readableLink, $definitions, $serializerContext)];
